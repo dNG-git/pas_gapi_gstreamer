@@ -1,0 +1,21 @@
+{
+ "pas_gst_caps": {
+  "container:video/mp4": "video/quicktime, variant=(string)iso",
+  "container:video/mpeg": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)true",
+  "container:video/quicktime": "video/quicktime",
+  "container:video/vnd.iptvforum.ttsmpeg2": "video/mpegts, mpegversion=(int)2, systemstream=(boolean)true, packetsize=(int)188",
+  "container:video/x-mpeg1": "video/mpeg, mpegversion=(int)1, systemstream=(boolean)true",
+  "container:video/x-mpeg2": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)true",
+
+  "format_audio/aac": "audio/mpeg, mpegversion=(int)4, stream-format=(string)raw",
+  "format_audio/ac3": "audio/x-ac3",
+  "format_audio/x-mp1": "audio/mpeg, mpegversion=(int)1, layer=(int)1",
+  "format_audio/x-mp2": "audio/mpeg, mpegversion=(int)1, layer=(int)2",
+  "format_audio/x-mp3": "audio/mpeg, mpegversion=(int)1, layer=(int)3",
+  "format_video/mp4": "video/mpeg, mpegversion=(int)4",
+  "format_video/mpeg": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)false",
+  "format_video/h264": "video/x-h264",
+  "format_video/x-mpeg1": "video/mpeg, mpegversion=(int)1, systemstream=(boolean)false",
+  "format_video/x-mpeg2": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)false"
+ }
+}

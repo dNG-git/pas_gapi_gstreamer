@@ -1,0 +1,43 @@
+{
+ "pas_gst_mimetypes": {
+  "audio/mpeg": {
+   "layer": {
+    "1": "audio/x-mp1",
+    "2": "audio/x-mp2",
+    "3": "audio/x-mp3"
+   },
+   "mpegversion": {
+    "4": "audio/aac"
+   }
+  },
+
+  "audio/x-ac3": "audio/ac3",
+  "audio/x-private1-ac3": "audio/ac3",
+
+  "private/teletext": "text/vnd.dvb.subtitle",
+
+  "video/mpeg": {
+   "mpegversion": {
+    "1": "video/x-mpeg1",
+    "2": "video/x-mpeg2",
+    "4": "video/mp4"
+   }
+  },
+
+  "video/mpegts": "video/vnd.iptvforum.ttsmpeg2",
+
+  "video/quicktime": {
+   "variant": {
+    "": "video/quicktime",
+    "iso": "video/mp4"
+   }
+  },
+
+  "video/x-h264": {
+   "stream-format": {
+    "avc": "video/h264",
+    "byte-stream": "video/h264"
+   }
+  }
+ }
+}
