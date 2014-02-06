@@ -50,7 +50,8 @@ GStreamer mixin for metadata to provide some helper methods.
              GNU General Public License 2
 	"""
 
-	def parse_tag(self, tag):
+	@staticmethod
+	def _parse_tag(tag):
 	#
 		"""
 Parses a string or list of strings from a GStreamer tag.

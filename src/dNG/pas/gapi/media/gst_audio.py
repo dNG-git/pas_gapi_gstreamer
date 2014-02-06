@@ -36,9 +36,9 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
-from dNG.pas.data.traced_exception import TracedException
 from dNG.pas.data.media.abstract import Abstract
 from dNG.pas.data.media.audio_metadata import AudioMetadata
+from dNG.pas.runtime.value_exception import ValueException
 from .gstreamer import Gstreamer
 
 class GstAudio(Gstreamer, Abstract):
@@ -53,6 +53,11 @@ GStreamer implementation of the audio class.
 :since:      v0.1.00
 :license:    http://www.direct-netware.de/redirect.py?licenses;gpl
              GNU General Public License 2
+	"""
+
+	X_TYPE = "audio"
+	"""
+Multi-value type name
 	"""
 
 	def __init__(self):
@@ -77,7 +82,7 @@ Return the metadata for this URL.
 		"""
 
 		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, AudioMetadata)): raise TracedException("Metadata do not correspond to audio")
+		if (not isinstance(_return, AudioMetadata)): raise ValueException("Metadata do not correspond to audio")
 		return _return
 	#
 #

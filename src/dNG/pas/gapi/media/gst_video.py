@@ -36,9 +36,9 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
-from dNG.pas.data.traced_exception import TracedException
 from dNG.pas.data.media.abstract import Abstract
 from dNG.pas.data.media.container_metadata import ContainerMetadata
+from dNG.pas.runtime.value_exception import ValueException
 from .gstreamer import Gstreamer
 
 class GstVideo(Gstreamer, Abstract):
@@ -53,6 +53,11 @@ GStreamer implementation of the video class.
 :since:      v0.1.00
 :license:    http://www.direct-netware.de/redirect.py?licenses;gpl
              GNU General Public License 2
+	"""
+
+	X_TYPE = "video"
+	"""
+Multi-value type name
 	"""
 
 	def __init__(self):
@@ -77,7 +82,7 @@ Return the metadata for this URL.
 		"""
 
 		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, ContainerMetadata)): raise TracedException("Metadata do not correspond to video")
+		if (not isinstance(_return, ContainerMetadata)): raise ValueException("Metadata do not correspond to video")
 		return _return
 	#
 #

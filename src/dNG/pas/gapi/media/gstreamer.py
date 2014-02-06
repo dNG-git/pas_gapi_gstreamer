@@ -37,18 +37,18 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 NOTE_END //n"""
 
 from gi.repository import GLib, Gst, GstPbutils
-from threading import current_thread, local
+from threading import local
 import sys
 
 from dNG.pas.data.settings import Settings
-from dNG.pas.data.traced_exception import TracedException
 from dNG.pas.data.media.abstract import Abstract
 from dNG.pas.data.media.gst_audio_metadata import GstAudioMetadata
 from dNG.pas.data.media.gst_container_metadata import GstContainerMetadata
 from dNG.pas.data.media.gst_image_metadata import GstImageMetadata
 from dNG.pas.gapi.glib import Glib
-from dNG.pas.module.named_loader import NamedLoader
 from dNG.pas.gapi.mainloop.gobject import Gobject as GobjectMainloop
+from dNG.pas.module.named_loader import NamedLoader
+from dNG.pas.runtime.io_exception import IOException
 
 class Gstreamer(Abstract):
 #
@@ -62,6 +62,11 @@ This class provides access to GStreamer.
 :since:      v0.1.00
 :license:    http://www.direct-netware.de/redirect.py?licenses;gpl
              GNU General Public License 2
+	"""
+
+	X_TYPE = None
+	"""
+Multi-value type name
 	"""
 
 	def __init__(self):
@@ -135,7 +140,7 @@ out.
 
 		if (self.metadata == None):
 		#
-			if (self.source_url == None): raise TracedException("URL not defined")
+			if (self.source_url == None): raise IOException("URL not defined")
 
 			self._thread_local_check()
 
@@ -145,8 +150,11 @@ out.
 
 			if (gst_discoverer_info != None):
 			#
-				if (gst_discoverer_info.get_result() == GstPbutils.DiscovererResult.OK):
+				gst_result = gst_discoverer_info.get_result()
+
+				if (gst_result == GstPbutils.DiscovererResult.OK or gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS):
 				#
+					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler != None): self.log_handler.warning("GStreamer is missing plugins for '{0}'".format(self.source_url))
 					self.local.metadata = { 'container': None, 'audio': [ ], 'video': [ ], 'text': [ ], 'other': [ ], 'seekable': gst_discoverer_info.get_seekable(), "tags": { } }
 
 					self.local.metadata['length'] = (gst_discoverer_info.get_duration() / Gst.SECOND)
@@ -156,7 +164,7 @@ out.
 					elif (self.local.metadata['container'] == None and len(self.local.metadata['audio']) == 0 and len(self.local.metadata['video']) == 1 and self.local.metadata['video'][0]['codec'][:6] == "image/"): self.metadata = GstImageMetadata(self.source_url, self.local.metadata)
 					else: self.metadata = GstContainerMetadata(self.source_url, self.local.metadata)
 				#
-				elif (gst_discoverer_info.get_result() == GstPbutils.DiscovererResult.TIMEOUT): raise IOError("Timeout occured before discovery completed")
+				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery completed")
 			#
 		#
 
@@ -243,23 +251,27 @@ Parses the GStreamer caps dict to identify a matching mimetype.
 		#
 			for dependency in mimetype_definition:
 			#
-				if (dependency in caps):
-				#
+				mimetype_definition_match = None
+
+				if (dependency in caps): mimetype_definition_match = mimetype_definition[dependency]
+				elif (dependency == "_x_type" and self.__class__.X_TYPE in mimetype_definition['_x_type']): mimetype_definition_match = mimetype_definition['_x_type'][self.__class__.X_TYPE]
+
+				if (mimetype_definition_match != None):
 					"""
 Dependencies are reflected as hierarchal dicts with dict values for
 additional dependencies or str containing the codec.
 					"""
 
-					type_dependency = type(mimetype_definition[dependency])
+					type_mimetype_definition_match = type(mimetype_definition_match)
 
-					if (type_dependency == str): _return = mimetype_definition[dependency]
-					elif (type_dependency == dict):
+					if (type_mimetype_definition_match == str): _return = mimetype_definition_match
+					elif (type_mimetype_definition_match == dict):
 					#
-						for value in mimetype_definition[dependency]:
+						for value in mimetype_definition_match:
 						#
 							if (str(caps[dependency]) == value):
 							#
-								_return = (mimetype_definition[dependency][value] if (type(mimetype_definition[dependency][value]) == str) else self._parse_gst_caps_dependencies(caps, mimetype_definition[dependency][value]))
+								_return = (mimetype_definition_match[value] if (type(mimetype_definition_match[value]) == str) else self._parse_gst_caps_dependencies(caps, mimetype_definition_match[value]))
 								break
 							#
 						#
@@ -352,7 +364,8 @@ Parses the GStreamer stream info.
 				else: self.local.metadata[stream_type].append(stream_data)
 
 				gst_tags = stream_info.get_tags()
-				if (gst_tags != None): gst_tags.foreach(self._parse_gst_tag, { })
+				stream_data['tags'] = { }
+				if (gst_tags != None): gst_tags.foreach(self._parse_gst_tag, { "stream": stream_data })
 			#
 		#
 	#
@@ -379,8 +392,21 @@ Parses a GStreamer structure recursively.
 				key = structure.nth_field_name(i)
 				field_type = structure.get_field_type(key)
 
-				if (field_type == Gst.Structure): _return[key] = self._parse_gst_structure(structure.get_value(key))
-				else: _return[key] = structure.get_value(key)
+				try: _return[key] = (self._parse_gst_structure(structure.get_value(key)) if (field_type == Gst.Structure) else structure.get_value(key))
+				except Exception:
+				#
+					"""
+Workaround for "unknown type GstFraction". We can't handle "GstValueArray" or
+"GstBitmask" here. Last seen with GStreamer 1.2.1.
+					"""
+
+					if (field_type.name == "GstFraction"):
+					#
+						fraction_struct = structure.get_fraction(key)
+						_return[key] = fraction_struct[1] / fraction_struct[2]
+					#
+					else: raise
+				#
 			#
 			except Exception as handled_exception:
 			#
@@ -391,7 +417,7 @@ Parses a GStreamer structure recursively.
 		return _return
 	#
 
-	def _parse_gst_tag(self, tag_list, tag, *args):
+	def _parse_gst_tag(self, tag_list, tag, kwargs):
 	#
 		"""
 Parses the GStreamer tag data.
@@ -399,7 +425,8 @@ Parses the GStreamer tag data.
 :param tag_list: GStreamer tag list definition
 :param tag: GStreamer tag to be parsed
 
-:since: v0.1.00
+:return: (bool) True if the foreach operation should continue.
+:since:  v0.1.00
 		"""
 
 		if (type(tag_list) == Gst.TagList and type(tag) == str):
@@ -410,14 +437,12 @@ Parses the GStreamer tag data.
 			#
 				value = tag_list.get_value_index(tag, i)
 
-				if (tag not in self.local.metadata['tags']): self.local.metadata['tags'][tag] = value
-				elif (type(self.local.metadata['tags'][tag]) == list):
-				#
-					if (value not in self.local.metadata['tags'][tag]): self.local.metadata['tags'][tag].append(value)
-				#
-				elif (self.local.metadata['tags'][tag] != value): self.local.metadata['tags'][tag] = [ self.local.metadata['tags'][tag], value ]
+				Gstreamer._tag_add(self.local.metadata['tags'], tag, value)
+				if ("stream" in kwargs): Gstreamer._tag_add(kwargs['stream']['tags'], tag, value)
 			#
 		#
+
+		return True
 	#
 
 	def stop(self, params = None, last_return = None):
@@ -451,9 +476,6 @@ sure that these variables are defined.
 			#
 				Gst.init(sys.argv)
 				self.local.libversion = Gst.version_string()
-				self.local.threadname = "de.vplace.classes.pas_gst.{0}".format(current_thread().name)
-				self.local.watches = [ ]
-
 				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer._thread_local_check()- reporting: {0} ready".format(self.local.libversion))
 			#
 			except Exception as handled_exception:
@@ -478,6 +500,30 @@ Initializes an media instance for the given URL.
 		self.source_url = url
 
 		return True
+	#
+
+	@staticmethod
+	def _tag_add(tag_dict, tag, value):
+	#
+		"""
+Adds not already added tags to the given dictionary.
+
+:param tag_dict: Tag dictionary
+:param tag: GStreamer tag name
+:param value: Tag value
+
+:since: v0.1.00
+		"""
+
+		if (type(tag_dict) == dict):
+		#
+			if (tag not in tag_dict): tag_dict[tag] = value
+			elif (type(tag_dict[tag]) == list):
+			#
+				if (value not in tag_dict[tag]): tag_dict[tag].append(value)
+			#
+			elif (tag_dict[tag] != value): tag_dict[tag] = [ tag_dict[tag], value ]
+		#
 	#
 #
 

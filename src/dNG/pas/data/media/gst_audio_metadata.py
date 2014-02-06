@@ -37,7 +37,7 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 NOTE_END //n"""
 
 from dNG.pas.data.mime_type import MimeType
-from dNG.pas.data.traced_exception import TracedException
+from dNG.pas.runtime.value_exception import ValueException
 from .audio_metadata import AudioMetadata
 from .gst_metadata_mixin import GstMetadataMixin
 
@@ -65,28 +65,28 @@ Constructor __init__(GstAudioMetadata)
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['audio'][0]['codec'])
 		if (mimetype_definition == None): mimetype_definition = { "type": gst_metadata['audio'][0]['codec'], "class": gst_metadata['audio'][0]['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "audio"): raise TracedException("Metadata do not correspond to audio")
+		if (mimetype_definition['class'] != "audio"): raise ValueException("Metadata do not correspond to audio")
 
 		kwargs = { }
 
-		if ("album" in gst_metadata['tags']): kwargs['album'] = self.parse_tag(gst_metadata['tags']['album'])
-		if ("album-artist" in gst_metadata['tags']): kwargs['album_artist'] = self.parse_tag(gst_metadata['tags']['album-artist'])
-		if ("artist" in gst_metadata['tags']): kwargs['artist'] = self.parse_tag(gst_metadata['tags']['artist'])
+		if ("album" in gst_metadata['tags']): kwargs['album'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['album'])
+		if ("album-artist" in gst_metadata['tags']): kwargs['album_artist'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['album-artist'])
+		if ("artist" in gst_metadata['tags']): kwargs['artist'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['artist'])
 		if (gst_metadata['audio'][0]['bitrate'] > 0): kwargs['bitrate'] = gst_metadata['audio'][0]['bitrate']
 		if (gst_metadata['audio'][0]['bits_per_sample'] > 0): kwargs['bps'] = gst_metadata['audio'][0]['bits_per_sample']
 		if (gst_metadata['audio'][0]['channels'] > 0): kwargs['channels'] = gst_metadata['audio'][0]['channels']
 		kwargs['codec'] = gst_metadata['audio'][0]['codec']
 
-		if ("comment" in gst_metadata['tags']): kwargs['comment'] = self.parse_tag(gst_metadata['tags']['comment'])
-		elif ("extended-comment" in gst_metadata['tags']): kwargs['comment'] = self.parse_tag(gst_metadata['tags']['extended-comment'])
+		if ("comment" in gst_metadata['tags']): kwargs['comment'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['comment'])
+		elif ("extended-comment" in gst_metadata['tags']): kwargs['comment'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['extended-comment'])
 
-		if ("genre" in gst_metadata['tags']): kwargs['genre'] = self.parse_tag(gst_metadata['tags']['genre'])
+		if ("genre" in gst_metadata['tags']): kwargs['genre'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['genre'])
 		kwargs['length'] = gst_metadata['length']
 		kwargs['mimeclass'] = mimetype_definition['class']
 		kwargs['mimetype'] = mimetype_definition['type']
 		if (gst_metadata['audio'][0]['sample_rate'] > 0): kwargs['sample_rate'] = gst_metadata['audio'][0]['sample_rate']
-		if ("title" in gst_metadata['tags']): kwargs['title'] = self.parse_tag(gst_metadata['tags']['title'])
-		if ("track-number" in gst_metadata['tags']): kwargs['track'] = self.parse_tag(gst_metadata['tags']['track-number'])
+		if ("title" in gst_metadata['tags']): kwargs['title'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['title'])
+		if ("track-number" in gst_metadata['tags']): kwargs['track'] = GstMetadataMixin._parse_tag(gst_metadata['tags']['track-number'])
 
 		AudioMetadata.__init__(self, url, **kwargs)
 	#
