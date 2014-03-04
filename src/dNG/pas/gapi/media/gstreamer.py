@@ -36,7 +36,9 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
-from gi.repository import GLib, Gst, GstPbutils
+# pylint: disable=import-error
+
+from gi.repository import Gst, GstPbutils
 from threading import local
 import sys
 
@@ -63,6 +65,8 @@ This class provides access to GStreamer.
 :license:    http://www.direct-netware.de/redirect.py?licenses;gpl
              GNU General Public License 2
 	"""
+
+	# pylint: disable=unused-argument
 
 	X_TYPE = None
 	"""
@@ -135,6 +139,8 @@ out.
 :return: (object) Metadata; None on error
 :since:  v0.1.00
 		"""
+
+		# pylint: disable=no-member
 
 		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer.metadata_get()- (#echo(__LINE__)#)")
 
@@ -377,9 +383,11 @@ Parses a GStreamer structure recursively.
 
 :param structure: GStreamer structure
 
-:return: (object) GObject object; None on error
+:return: (dict) GStreamer structure content
 :since:  v0.1.00
 		"""
+
+		# pylint: disable=broad-except,no-member
 
 		_return = { }
 
@@ -467,6 +475,8 @@ sure that these variables are defined.
 
 :since: v0.1.00
 		"""
+
+		# pylint: disable=broad-except,no-member
 
 		if (not hasattr(self.local, "libversion")):
 		#

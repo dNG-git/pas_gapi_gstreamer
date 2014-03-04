@@ -36,6 +36,8 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
+# pylint: disable=unused-import
+
 from dNG.pas.gapi.media.gst_video import GstVideo as Video
 
 ##j## EOF

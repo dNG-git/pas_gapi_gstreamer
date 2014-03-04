@@ -36,6 +36,8 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
+# pylint: disable=unused-import
+
 from dNG.pas.gapi.media.gst_audio import GstAudio as Audio
 
 ##j## EOF
