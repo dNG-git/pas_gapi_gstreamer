@@ -48,7 +48,7 @@ GStreamer implementation of the video class.
 
 :author:     direct Netware Group
 :copyright:  direct Netware Group - All rights reserved
-:package:    pas;gapi
+:package:    pas.gapi
 :subpackage: gstreamer
 :since:      v0.1.00
 :license:    http://www.direct-netware.de/redirect.py?licenses;gpl

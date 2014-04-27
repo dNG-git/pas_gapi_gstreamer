@@ -2,7 +2,7 @@
 ##j## BOF
 
 """
-dNG.pas.gapi.media.GstAudio
+dNG.pas.data.media.GstVideoStreamMetadata
 """
 """n// NOTE
 ----------------------------------------------------------------------------
@@ -36,18 +36,18 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 NOTE_END //n"""
 
-from dNG.pas.data.media.abstract import Abstract
-from dNG.pas.data.media.audio_metadata import AudioMetadata
+from dNG.pas.data.binary import Binary
+from dNG.pas.data.mime_type import MimeType
 from dNG.pas.runtime.value_exception import ValueException
-from .gstreamer import Gstreamer
+from .video_stream_metadata import VideoStreamMetadata
 
-class GstAudio(Gstreamer, Abstract):
+class GstVideoStreamMetadata(VideoStreamMetadata):
 #
 	"""
-GStreamer implementation of the audio class.
+This class provides access to GStreamer video stream metadata.
 
 :author:     direct Netware Group
-:copyright:  direct Netware Group - All rights reserved
+:copyright:  (C) direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
 :since:      v0.1.00
@@ -55,35 +55,40 @@ GStreamer implementation of the audio class.
              GNU General Public License 2
 	"""
 
-	X_TYPE = "audio"
-	"""
-Multi-value type name
-	"""
-
-	def __init__(self):
+	def __init__(self, url, gst_stream_metadata):
 	#
 		"""
-Constructor __init__(GstAudio)
+Constructor __init__(GstVideoStreamMetadata)
 
 :since: v0.1.00
 		"""
 
-		Abstract.__init__(self)
-		Gstreamer.__init__(self)
-	#
+		# pylint: disable=star-args
 
-	def get_metadata(self):
-	#
-		"""
-Return the metadata for this URL.
+		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
+		if (mimetype_definition == None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
+		if (mimetype_definition['class'] != "video"): raise ValueException("Metadata do not correspond to video")
 
-:return: (object) Metadata object
-:since:  v0.1.00
-		"""
+		kwargs = { }
 
-		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, AudioMetadata)): raise ValueException("Metadata do not correspond to audio")
-		return _return
+		kwargs['codec'] = gst_stream_metadata['codec']
+		if (gst_stream_metadata['bitrate'] > 0): kwargs['bitrate'] = gst_stream_metadata['bitrate']
+		if (gst_stream_metadata['depth'] > 0): kwargs['bpp'] = gst_stream_metadata['depth']
+		if (gst_stream_metadata['framerate'] > 0): kwargs['framerate'] = gst_stream_metadata['framerate']
+		if ("height" in gst_stream_metadata): kwargs['height'] = gst_stream_metadata['height']
+		kwargs['mimeclass'] = mimetype_definition['class']
+		kwargs['mimetype'] = mimetype_definition['type']
+
+		if ("profile" in gst_stream_metadata):
+		#
+			profile = Binary.str(gst_stream_metadata['profile']).lower()
+			if ("level" in gst_stream_metadata): profile += "-{0}".format(gst_stream_metadata['level'].lower())
+			kwargs['codec_profile'] = profile
+		#
+
+		if ("width" in gst_stream_metadata): kwargs['width'] = gst_stream_metadata['width']
+
+		VideoStreamMetadata.__init__(self, url, **kwargs)
 	#
 #
 
