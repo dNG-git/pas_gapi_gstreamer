@@ -1,9 +1,9 @@
 {
  "pas_gst_caps": {
+  "container:video/mp2t": "video/mpegts, mpegversion=(int)2, systemstream=(boolean)true, packetsize=(int)188",
   "container:video/mp4": "video/quicktime, variant=(string)iso",
   "container:video/mpeg": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)true",
   "container:video/quicktime": "video/quicktime",
-  "container:video/vnd.iptvforum.ttsmpeg2": "video/mpegts, mpegversion=(int)2, systemstream=(boolean)true, packetsize=(int)188",
   "container:video/x-mpeg1": "video/mpeg, mpegversion=(int)1, systemstream=(boolean)true",
   "container:video/x-mpeg2": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)true",
 

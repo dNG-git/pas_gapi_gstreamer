@@ -31,7 +31,7 @@
    }
   },
 
-  "video/mpegts": "video/vnd.iptvforum.ttsmpeg2",
+  "video/mpegts": "video/mp2t",
 
   "video/quicktime": {
    "variant": {
