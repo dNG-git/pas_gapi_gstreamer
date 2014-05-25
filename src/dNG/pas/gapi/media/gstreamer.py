@@ -111,9 +111,9 @@ GStreamer pipeline in use
 Processing may take some time. Wait for this amount of seconds.
 		"""
 
-		Settings.read_file("{0}/settings/pas_gst.json".format(Settings.instance['path_data']))
-		Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.instance['path_data']))
-		Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.instance['path_data']))
+		Settings.read_file("{0}/settings/pas_gst.json".format(Settings.get("path_data")))
+		Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.get("path_data")))
+		Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.get("path_data")))
 
 		try: self.discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 3))
 		except ValueError: self.discovery_timeout = 3
@@ -130,6 +130,34 @@ Destructor __del__(Gstreamer)
 		self.stop()
 	#
 
+	def _ensure_thread_local(self):
+	#
+		"""
+For thread safety some variables are defined per thread. This method makes
+sure that these variables are defined.
+
+:since: v0.1.00
+		"""
+
+		# pylint: disable=broad-except,no-member
+
+		if (not hasattr(self.local, "libversion")):
+		#
+			self.local.libversion = None
+
+			try:
+			#
+				Gst.init(sys.argv)
+				self.local.libversion = Gst.version_string()
+				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready".format(self, self.local.libversion))
+			#
+			except Exception as handled_exception:
+			#
+				if (self.log_handler != None): self.log_handler.error(handled_exception)
+			#
+		#
+	#
+
 	def get_metadata(self):
 	#
 		"""
@@ -142,13 +170,13 @@ out.
 
 		# pylint: disable=no-member
 
-		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer.metadata_get()- (#echo(__LINE__)#)")
+		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer.get_metadata()- (#echo(__LINE__)#)")
 
 		if (self.metadata == None):
 		#
 			if (self.source_url == None): raise IOException("URL not defined")
 
-			self._thread_local_check()
+			self._ensure_thread_local()
 
 			gst_discoverer = GstPbutils.Discoverer()
 			gst_discoverer.set_property("timeout", (self.discovery_timeout * Gst.SECOND))
@@ -445,8 +473,8 @@ Parses the GStreamer tag data.
 			#
 				value = tag_list.get_value_index(tag, i)
 
-				Gstreamer._tag_add(self.local.metadata['tags'], tag, value)
-				if ("stream" in kwargs): Gstreamer._tag_add(kwargs['stream']['tags'], tag, value)
+				Gstreamer._add_unique_tag(self.local.metadata['tags'], tag, value)
+				if ("stream" in kwargs): Gstreamer._add_unique_tag(kwargs['stream']['tags'], tag, value)
 			#
 		#
 
@@ -467,34 +495,6 @@ Stop an active GStreamer process.
 		return last_return
 	#
 
-	def _thread_local_check(self):
-	#
-		"""
-For thread safety some variables are defined per thread. This method makes
-sure that these variables are defined.
-
-:since: v0.1.00
-		"""
-
-		# pylint: disable=broad-except,no-member
-
-		if (not hasattr(self.local, "libversion")):
-		#
-			self.local.libversion = None
-
-			try:
-			#
-				Gst.init(sys.argv)
-				self.local.libversion = Gst.version_string()
-				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer._thread_local_check()- reporting: {0} ready".format(self.local.libversion))
-			#
-			except Exception as handled_exception:
-			#
-				if (self.log_handler != None): self.log_handler.error(handled_exception)
-			#
-		#
-	#
-
 	def open_url(self, url):
 	#
 		"""
@@ -513,7 +513,7 @@ Initializes an media instance for the given URL.
 	#
 
 	@staticmethod
-	def _tag_add(tag_dict, tag, value):
+	def _add_unique_tag(tag_dict, tag, value):
 	#
 		"""
 Adds not already added tags to the given dictionary.
