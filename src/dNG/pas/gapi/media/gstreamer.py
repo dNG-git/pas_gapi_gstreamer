@@ -2,10 +2,6 @@
 ##j## BOF
 
 """
-dNG.pas.gapi.GStreamer
-"""
-"""n// NOTE
-----------------------------------------------------------------------------
 direct PAS
 Python Application Services
 ----------------------------------------------------------------------------
@@ -33,8 +29,7 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 ----------------------------------------------------------------------------
 #echo(pasGapiGStreamerVersion)#
 #echo(__FILEPATH__)#
-----------------------------------------------------------------------------
-NOTE_END //n"""
+"""
 
 # pylint: disable=import-error
 
@@ -149,11 +144,11 @@ sure that these variables are defined.
 			#
 				Gst.init(sys.argv)
 				self.local.libversion = Gst.version_string()
-				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready".format(self, self.local.libversion))
+				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready", self, self.local.libversion, context = "pas_gapi_gstreamer")
 			#
 			except Exception as handled_exception:
 			#
-				if (self.log_handler != None): self.log_handler.error(handled_exception)
+				if (self.log_handler != None): self.log_handler.error(handled_exception, context = "pas_gapi_gstreamer")
 			#
 		#
 	#
@@ -170,7 +165,7 @@ out.
 
 		# pylint: disable=no-member
 
-		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -Gstreamer.get_metadata()- (#echo(__LINE__)#)")
+		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_metadata()- (#echo(__LINE__)#)", self, context = "pas_gapi_gstreamer")
 
 		if (self.metadata == None):
 		#
@@ -188,14 +183,32 @@ out.
 
 				if (gst_result == GstPbutils.DiscovererResult.OK or gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS):
 				#
-					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler != None): self.log_handler.warning("GStreamer is missing plugins for '{0}'".format(self.source_url))
-					self.local.metadata = { 'container': None, 'audio': [ ], 'video': [ ], 'text': [ ], 'other': [ ], 'seekable': gst_discoverer_info.get_seekable(), "tags": { } }
+					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler != None):
+					# 
+						self.log_handler.warning("GStreamer is missing plugins for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
+					#
+
+					self.local.metadata = { "container": None,
+					                        "audio": [ ],
+					                        "video": [ ],
+					                        "text": [ ],
+					                        "other": [ ],
+					                        "seekable": gst_discoverer_info.get_seekable(),
+					                        "tags": { }
+					                      }
 
 					self.local.metadata['length'] = (gst_discoverer_info.get_duration() / Gst.SECOND)
 					self._parse_gst_stream_list(gst_discoverer_info.get_stream_info())
 
-					if (self.local.metadata['container'] == None and len(self.local.metadata['audio']) == 1 and len(self.local.metadata['video']) == 0): self.metadata = GstAudioMetadata(self.source_url, self.local.metadata)
-					elif (self.local.metadata['container'] == None and len(self.local.metadata['audio']) == 0 and len(self.local.metadata['video']) == 1 and self.local.metadata['video'][0]['codec'][:6] == "image/"): self.metadata = GstImageMetadata(self.source_url, self.local.metadata)
+					if (self.local.metadata['container'] == None
+					    and len(self.local.metadata['audio']) == 1
+					    and len(self.local.metadata['video']) == 0
+					   ): self.metadata = GstAudioMetadata(self.source_url, self.local.metadata)
+					elif (self.local.metadata['container'] == None
+					      and len(self.local.metadata['audio']) == 0
+					      and len(self.local.metadata['video']) == 1
+					      and self.local.metadata['video'][0]['codec'][:6] == "image/"
+					     ): self.metadata = GstImageMetadata(self.source_url, self.local.metadata)
 					else: self.metadata = GstContainerMetadata(self.source_url, self.local.metadata)
 				#
 				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery completed")
@@ -291,6 +304,7 @@ Parses the GStreamer caps dict to identify a matching mimetype.
 				elif (dependency == "_x_type" and self.__class__.X_TYPE in mimetype_definition['_x_type']): mimetype_definition_match = mimetype_definition['_x_type'][self.__class__.X_TYPE]
 
 				if (mimetype_definition_match != None):
+				#
 					"""
 Dependencies are reflected as hierarchal dicts with dict values for
 additional dependencies or str containing the codec.
@@ -431,10 +445,10 @@ Parses a GStreamer structure recursively.
 				try: _return[key] = (self._parse_gst_structure(structure.get_value(key)) if (field_type == Gst.Structure) else structure.get_value(key))
 				except Exception:
 				#
-					"""
+					"""n// NOTE
 Workaround for "unknown type GstFraction". We can't handle "GstValueArray" or
 "GstBitmask" here. Last seen with GStreamer 1.2.1.
-					"""
+					NOTE_END //n"""
 
 					if (field_type.name == "GstFraction"):
 					#
@@ -446,7 +460,7 @@ Workaround for "unknown type GstFraction". We can't handle "GstValueArray" or
 			#
 			except Exception as handled_exception:
 			#
-				if (self.log_handler != None): self.log_handler.error(handled_exception)
+				if (self.log_handler != None): self.log_handler.error(handled_exception, context = "pas_gapi_gstreamer")
 			#
 		#
 
