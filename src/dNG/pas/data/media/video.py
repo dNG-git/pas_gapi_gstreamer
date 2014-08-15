@@ -33,6 +33,9 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 
 # pylint: disable=unused-import
 
-from dNG.pas.gapi.media.gst_video import GstVideo as Video
+try: from dNG.pas.gapi.media.gst_video import GstVideo as Video
+except ImportError: Video = None
+
+if (Video == None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Video
 
 ##j## EOF

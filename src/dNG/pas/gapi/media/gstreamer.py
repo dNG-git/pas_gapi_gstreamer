@@ -45,6 +45,7 @@ from dNG.pas.data.media.gst_image_metadata import GstImageMetadata
 from dNG.pas.gapi.glib import Glib
 from dNG.pas.gapi.mainloop.gobject import Gobject as GobjectMainloop
 from dNG.pas.module.named_loader import NamedLoader
+from dNG.pas.runtime.exception_log_trap import ExceptionLogTrap
 from dNG.pas.runtime.io_exception import IOException
 
 class Gstreamer(Abstract):
@@ -140,15 +141,11 @@ sure that these variables are defined.
 		#
 			self.local.libversion = None
 
-			try:
+			with ExceptionLogTrap("pas_gapi_gstreamer"):
 			#
 				Gst.init(sys.argv)
 				self.local.libversion = Gst.version_string()
 				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready", self, self.local.libversion, context = "pas_gapi_gstreamer")
-			#
-			except Exception as handled_exception:
-			#
-				if (self.log_handler != None): self.log_handler.error(handled_exception, context = "pas_gapi_gstreamer")
 			#
 		#
 	#
@@ -437,7 +434,7 @@ Parses a GStreamer structure recursively.
 
 		for i in range(0, structure_count):
 		#
-			try:
+			with ExceptionLogTrap("pas_gapi_gstreamer"):
 			#
 				key = structure.nth_field_name(i)
 				field_type = structure.get_field_type(key)
@@ -457,10 +454,6 @@ Workaround for "unknown type GstFraction". We can't handle "GstValueArray" or
 					#
 					else: raise
 				#
-			#
-			except Exception as handled_exception:
-			#
-				if (self.log_handler != None): self.log_handler.error(handled_exception, context = "pas_gapi_gstreamer")
 			#
 		#
 

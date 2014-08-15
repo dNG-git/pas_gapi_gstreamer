@@ -33,6 +33,9 @@ http://www.direct-netware.de/redirect.py?licenses;gpl
 
 # pylint: disable=unused-import
 
-from dNG.pas.gapi.media.gst_audio import GstAudio as Audio
+try: from dNG.pas.gapi.media.gst_audio import GstAudio as Audio
+except ImportError: Audio = None
+
+if (Audio == None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Audio
 
 ##j## EOF
