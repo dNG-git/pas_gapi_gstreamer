@@ -1,0 +1,2 @@
+-e git+http://git.direct-netware.de/pas/gapi/core/#egg=pas_gapi_core
+-e git+http://git.direct-netware.de/pas/media/#egg=pas_media
