@@ -32,7 +32,7 @@ https://www.direct-netware.de/redirect?licenses;gpl
 """
 
 from dNG.pas.data.mime_type import MimeType
-from dNG.pas.runtime.value_exception import ValueException
+from dNG.pas.data.logging.log_line import LogLine
 from .audio_metadata import AudioMetadata
 from .gst_metadata_mixin import GstMetadataMixin
 
@@ -62,7 +62,7 @@ Constructor __init__(GstAudioMetadata)
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['audio'][0]['codec'])
 		if (mimetype_definition == None): mimetype_definition = { "type": gst_metadata['audio'][0]['codec'], "class": gst_metadata['audio'][0]['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "audio"): raise ValueException("Metadata do not correspond to audio")
+		if (mimetype_definition['class'] != "audio"): LogLine.debug("Metadata '{0}' do not correspond to audio".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
 

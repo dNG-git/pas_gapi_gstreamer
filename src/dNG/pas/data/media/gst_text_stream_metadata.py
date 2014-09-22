@@ -32,7 +32,7 @@ https://www.direct-netware.de/redirect?licenses;gpl
 """
 
 from dNG.pas.data.mime_type import MimeType
-from dNG.pas.runtime.value_exception import ValueException
+from dNG.pas.data.logging.log_line import LogLine
 from .stream_metadata import StreamMetadata
 
 class GstTextStreamMetadata(StreamMetadata):
@@ -61,7 +61,7 @@ Constructor __init__(GstTextStreamMetadata)
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
 		if (mimetype_definition == None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "text"): raise ValueException("Metadata do not correspond to text streams")
+		if (mimetype_definition['class'] != "text"): LogLine.debug("Metadata '{0}' do not correspond to text streams".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
 

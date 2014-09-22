@@ -102,7 +102,7 @@ GStreamer source URI
 		"""
 GStreamer pipeline in use
 		"""
-		self.discovery_timeout = 3
+		self.discovery_timeout = 5
 		"""
 Processing may take some time. Wait for this amount of seconds.
 		"""
@@ -111,8 +111,8 @@ Processing may take some time. Wait for this amount of seconds.
 		Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.get("path_data")))
 		Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.get("path_data")))
 
-		try: self.discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 3))
-		except ValueError: self.discovery_timeout = 3
+		discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 0))
+		if (discovery_timeout > 0): self.discovery_timeout = discovery_timeout
 	#
 
 	def __del__(self):

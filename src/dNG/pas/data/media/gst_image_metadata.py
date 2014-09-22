@@ -32,7 +32,7 @@ https://www.direct-netware.de/redirect?licenses;gpl
 """
 
 from dNG.pas.data.mime_type import MimeType
-from dNG.pas.runtime.value_exception import ValueException
+from dNG.pas.data.logging.log_line import LogLine
 from .image_metadata import ImageMetadata
 
 class GstImageMetadata(ImageMetadata):
@@ -61,7 +61,7 @@ Constructor __init__(GstImageMetadata)
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['video'][0]['codec'])
 		if (mimetype_definition == None): mimetype_definition = { "type": gst_metadata['video'][0]['codec'], "class": gst_metadata['video'][0]['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "image"): raise ValueException("Metadata do not correspond to an image")
+		if (mimetype_definition['class'] != "image"): LogLine.debug("Metadata '{0}' do not correspond to an image".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
 

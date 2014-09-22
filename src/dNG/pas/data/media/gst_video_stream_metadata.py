@@ -33,7 +33,7 @@ https://www.direct-netware.de/redirect?licenses;gpl
 
 from dNG.pas.data.binary import Binary
 from dNG.pas.data.mime_type import MimeType
-from dNG.pas.runtime.value_exception import ValueException
+from dNG.pas.data.logging.log_line import LogLine
 from .video_stream_metadata import VideoStreamMetadata
 
 class GstVideoStreamMetadata(VideoStreamMetadata):
@@ -62,7 +62,7 @@ Constructor __init__(GstVideoStreamMetadata)
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
 		if (mimetype_definition == None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "video"): raise ValueException("Metadata do not correspond to video")
+		if (mimetype_definition['class'] != "video"): LogLine.debug("Metadata '{0}' do not correspond to video".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
 
