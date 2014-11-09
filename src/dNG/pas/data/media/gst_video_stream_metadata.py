@@ -69,10 +69,12 @@ Constructor __init__(GstVideoStreamMetadata)
 		kwargs['codec'] = gst_stream_metadata['codec']
 		if (gst_stream_metadata['bitrate'] > 0): kwargs['bitrate'] = gst_stream_metadata['bitrate']
 		if (gst_stream_metadata['depth'] > 0): kwargs['bpp'] = gst_stream_metadata['depth']
-		if (gst_stream_metadata['framerate'] > 0): kwargs['framerate'] = gst_stream_metadata['framerate']
 		if ("height" in gst_stream_metadata): kwargs['height'] = gst_stream_metadata['height']
 		kwargs['mimeclass'] = mimetype_definition['class']
 		kwargs['mimetype'] = mimetype_definition['type']
+
+		framerate = float(gst_stream_metadata['framerate'])
+		if (framerate > 0): kwargs['framerate'] = framerate
 
 		if ("profile" in gst_stream_metadata):
 		#
