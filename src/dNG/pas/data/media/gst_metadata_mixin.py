@@ -57,7 +57,7 @@ Parses a string or list of strings from a GStreamer tag.
 :since:  v0.1.00
 		"""
 
-		return (", ".join(tag) if (type(tag) == list) else tag)
+		return (", ".join(tag) if (type(tag) is list) else tag)
 	#
 #
 

@@ -36,6 +36,6 @@ https://www.direct-netware.de/redirect?licenses;gpl
 try: from dNG.pas.gapi.media.gst_video import GstVideo as Video
 except ImportError: Video = None
 
-if (Video == None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Video
+if (Video is None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Video
 
 ##j## EOF

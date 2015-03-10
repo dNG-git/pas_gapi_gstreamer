@@ -36,6 +36,6 @@ https://www.direct-netware.de/redirect?licenses;gpl
 try: from dNG.pas.gapi.media.gst_audio import GstAudio as Audio
 except ImportError: Audio = None
 
-if (Audio == None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Audio
+if (Audio is None): from dNG.pas.runtime.not_implemented_class import NotImplementedClass as Audio
 
 ##j## EOF

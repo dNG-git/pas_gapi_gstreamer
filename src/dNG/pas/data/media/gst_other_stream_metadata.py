@@ -59,7 +59,7 @@ Constructor __init__(GstOtherStreamMetadata)
 		# pylint: disable=star-args
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
-		if (mimetype_definition == None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
+		if (mimetype_definition is None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
 
 		kwargs = { }
 

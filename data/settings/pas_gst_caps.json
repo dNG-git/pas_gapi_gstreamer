@@ -12,6 +12,7 @@
   "format_audio/x-mp1": "audio/mpeg, mpegversion=(int)1, layer=(int)1",
   "format_audio/x-mp2": "audio/mpeg, mpegversion=(int)1, layer=(int)2",
   "format_audio/x-mp3": "audio/mpeg, mpegversion=(int)1, layer=(int)3",
+  "format_image/jpeg": "image/jpeg",
   "format_video/mp4": "video/mpeg, mpegversion=(int)4",
   "format_video/mpeg": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)false",
   "format_video/h264": "video/x-h264",

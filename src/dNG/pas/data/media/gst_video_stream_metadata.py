@@ -61,7 +61,7 @@ Constructor __init__(GstVideoStreamMetadata)
 		# pylint: disable=star-args
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
-		if (mimetype_definition == None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
+		if (mimetype_definition is None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
 		if (mimetype_definition['class'] != "video"): LogLine.debug("Metadata '{0}' do not correspond to video".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }

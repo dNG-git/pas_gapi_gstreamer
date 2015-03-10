@@ -68,6 +68,10 @@ This class provides access to GStreamer.
 	"""
 Multi-value type name
 	"""
+	debug_disabled = False
+	"""
+True if GStreamer debugging has been disabled.
+	"""
 
 	def __init__(self):
 	#
@@ -77,6 +81,14 @@ Constructor __init__(Gstreamer)
 :since: v0.1.00
 		"""
 
+		self.discovery_timeout = 5
+		"""
+Processing may take some time. Wait for this amount of seconds.
+		"""
+		self.pipeline = None
+		"""
+GStreamer pipeline in use
+		"""
 		self._gobject_mainloop = GobjectMainloop.get_instance()
 		"""
 GObject mainloop
@@ -98,18 +110,18 @@ Cached metadata instance
 		"""
 GStreamer source URI
 		"""
-		self.pipeline = None
-		"""
-GStreamer pipeline in use
-		"""
-		self.discovery_timeout = 5
-		"""
-Processing may take some time. Wait for this amount of seconds.
-		"""
 
 		Settings.read_file("{0}/settings/pas_gst.json".format(Settings.get("path_data")))
 		Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.get("path_data")))
 		Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.get("path_data")))
+
+		if (not Settings.get("pas_gst_debug_enabled", False)
+		    and (not Gstreamer.debug_disabled)
+		   ):
+		#
+			Gst.debug_set_default_threshold(Gst.DebugLevel.NONE)
+			Gstreamer.debug_disabled = True
+		#
 
 		discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 0))
 		if (discovery_timeout > 0): self.discovery_timeout = discovery_timeout
@@ -145,7 +157,7 @@ sure that these variables are defined.
 			#
 				Gst.init(sys.argv)
 				self.local.libversion = Gst.version_string()
-				if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready", self, self.local.libversion, context = "pas_gapi_gstreamer")
+				if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready", self, self.local.libversion, context = "pas_gapi_gstreamer")
 			#
 		#
 	#
@@ -162,11 +174,11 @@ out.
 
 		# pylint: disable=no-member
 
-		if (self.log_handler != None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_metadata()- (#echo(__LINE__)#)", self, context = "pas_gapi_gstreamer")
+		if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_metadata()- (#echo(__LINE__)#)", self, context = "pas_gapi_gstreamer")
 
-		if (self.metadata == None):
+		if (self.metadata is None):
 		#
-			if (self.source_url == None): raise IOException("URL not defined")
+			if (self.source_url is None): raise IOException("URL not defined")
 
 			self._ensure_thread_local()
 
@@ -174,15 +186,15 @@ out.
 			gst_discoverer.set_property("timeout", (self.discovery_timeout * Gst.SECOND))
 			gst_discoverer_info = gst_discoverer.discover_uri(self.source_url)
 
-			if (gst_discoverer_info != None):
+			if (gst_discoverer_info is not None):
 			#
 				gst_result = gst_discoverer_info.get_result()
 
 				if (gst_result == GstPbutils.DiscovererResult.OK or gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS):
 				#
-					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler != None):
+					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler is not None):
 					# 
-						self.log_handler.warning("GStreamer is missing plugins for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
+						self.log_handler.warning("GStreamer discovery detected missing plugins for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 					#
 
 					self.local.metadata = { "container": None,
@@ -197,11 +209,11 @@ out.
 					self.local.metadata['length'] = (gst_discoverer_info.get_duration() / Gst.SECOND)
 					self._parse_gst_stream_list(gst_discoverer_info.get_stream_info())
 
-					if (self.local.metadata['container'] == None
+					if (self.local.metadata['container'] is None
 					    and len(self.local.metadata['audio']) == 1
 					    and len(self.local.metadata['video']) == 0
 					   ): self.metadata = GstAudioMetadata(self.source_url, self.local.metadata)
-					elif (self.local.metadata['container'] == None
+					elif (self.local.metadata['container'] is None
 					      and len(self.local.metadata['audio']) == 0
 					      and len(self.local.metadata['video']) == 1
 					      and self.local.metadata['video'][0]['codec'][:6] == "image/"
@@ -209,6 +221,11 @@ out.
 					else: self.metadata = GstContainerMetadata(self.source_url, self.local.metadata)
 				#
 				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery completed")
+				else:
+				#
+					self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", gst_result, context = "pas_gapi_gstreamer")
+					raise IOException("GStreamer discovery failed")
+				#
 			#
 		#
 
@@ -228,7 +245,7 @@ Parses the GStreamer caps definition.
 
 		_return = { "codec": "", "gstcaps": "" }
 
-		if (type(caps) == Gst.Caps):
+		if (type(caps) is Gst.Caps):
 		#
 			_return['gstcaps'] = caps.to_string()
 			caps_count = caps.get_size()
@@ -259,17 +276,17 @@ Parses the GStreamer caps codec for a matching mimetype identifier.
 
 		_return = codec
 
-		if (type(caps) == dict and type(codec) == str):
+		if (type(caps) is dict and type(codec) is str):
 		#
 			gst_mimetypes = Settings.get("pas_gst_mimetypes", { })
 
 			if (codec in gst_mimetypes):
 			#
-				if (type(gst_mimetypes[codec]) == str): _return = gst_mimetypes[codec]
+				if (type(gst_mimetypes[codec]) is str): _return = gst_mimetypes[codec]
 				else:
 				#
 					codec = self._parse_gst_caps_dependencies(caps, gst_mimetypes[codec])
-					if (codec != None): _return = codec
+					if (codec is not None): _return = codec
 				#
 			#
 		#
@@ -291,16 +308,18 @@ Parses the GStreamer caps dict to identify a matching mimetype.
 
 		_return = None
 
-		if (type(mimetype_definition) == dict):
+		if (type(mimetype_definition) is dict):
 		#
 			for dependency in mimetype_definition:
 			#
 				mimetype_definition_match = None
 
 				if (dependency in caps): mimetype_definition_match = mimetype_definition[dependency]
-				elif (dependency == "_x_type" and self.__class__.X_TYPE in mimetype_definition['_x_type']): mimetype_definition_match = mimetype_definition['_x_type'][self.__class__.X_TYPE]
+				elif (dependency == "_x_type"
+				      and self.__class__.X_TYPE in mimetype_definition['_x_type']
+				     ): mimetype_definition_match = mimetype_definition['_x_type'][self.__class__.X_TYPE]
 
-				if (mimetype_definition_match != None):
+				if (mimetype_definition_match is not None):
 				#
 					"""
 Dependencies are reflected as hierarchal dicts with dict values for
@@ -309,21 +328,25 @@ additional dependencies or str containing the codec.
 
 					type_mimetype_definition_match = type(mimetype_definition_match)
 
-					if (type_mimetype_definition_match == str): _return = mimetype_definition_match
-					elif (type_mimetype_definition_match == dict):
+					if (type_mimetype_definition_match is str): _return = mimetype_definition_match
+					elif (type_mimetype_definition_match is dict):
 					#
 						for value in mimetype_definition_match:
 						#
 							if (str(caps[dependency]) == value):
 							#
-								_return = (mimetype_definition_match[value] if (type(mimetype_definition_match[value]) == str) else self._parse_gst_caps_dependencies(caps, mimetype_definition_match[value]))
+								_return = (mimetype_definition_match[value]
+								           if (type(mimetype_definition_match[value]) is str) else
+								           self._parse_gst_caps_dependencies(caps, mimetype_definition_match[value])
+								          )
+
 								break
 							#
 						#
 					#
 				#
 
-				if (_return != None): break
+				if (_return is not None): break
 			#
 		#
 
@@ -340,7 +363,7 @@ Parses the GStreamer stream list for contained streams.
 :since: v0.1.00
 		"""
 
-		while (stream_info != None):
+		while (stream_info is not None):
 		#
 			self._parse_gst_stream_info(stream_info)
 			stream_info = stream_info.get_next()
@@ -358,9 +381,10 @@ Parses the GStreamer stream info.
 		"""
 
 		stream_data = { }
+		stream_info_type = type(stream_info)
 		stream_type = None
 
-		if (type(stream_info) == GstPbutils.DiscovererAudioInfo):
+		if (stream_info_type is GstPbutils.DiscovererAudioInfo):
 		#
 			stream_data['bitrate'] = stream_info.get_bitrate()
 
@@ -373,16 +397,16 @@ Parses the GStreamer stream info.
 
 			stream_type = "audio"
 		#
-		elif (type(stream_info) == GstPbutils.DiscovererContainerInfo):
+		elif (stream_info_type is GstPbutils.DiscovererContainerInfo):
 		#
 			for sub_stream_info in Glib.parse_glist(stream_info.get_streams()): self._parse_gst_stream_info(sub_stream_info)
-			if (self.local.metadata['container'] == None): stream_type = "container"
+			if (self.local.metadata['container'] is None): stream_type = "container"
 		#
-		elif (type(stream_info) == GstPbutils.DiscovererSubtitleInfo):
+		elif (stream_info_type is GstPbutils.DiscovererSubtitleInfo):
 		#
 			stream_type = "text"
 		#
-		elif (type(stream_info) == GstPbutils.DiscovererVideoInfo):
+		elif (stream_info_type is GstPbutils.DiscovererVideoInfo):
 		#
 			stream_data['bitrate'] = stream_info.get_bitrate()
 
@@ -399,7 +423,7 @@ Parses the GStreamer stream info.
 			stream_type = "other"
 		#
 
-		if (stream_type != None):
+		if (stream_type is not None):
 		#
 			stream_data.update(self._parse_gst_caps(stream_info.get_caps()))
 
@@ -410,7 +434,7 @@ Parses the GStreamer stream info.
 
 				gst_tags = stream_info.get_tags()
 				stream_data['tags'] = { }
-				if (gst_tags != None): gst_tags.foreach(self._parse_gst_tag, { "stream": stream_data })
+				if (gst_tags is not None): gst_tags.foreach(self._parse_gst_tag, { "stream": stream_data })
 			#
 		#
 	#
@@ -472,7 +496,7 @@ Parses the GStreamer tag data.
 :since:  v0.1.00
 		"""
 
-		if (type(tag_list) == Gst.TagList and type(tag) == str):
+		if (type(tag_list) is Gst.TagList and type(tag) is str):
 		#
 			tags_count = tag_list.get_tag_size(tag)
 
@@ -532,10 +556,10 @@ Adds not already added tags to the given dictionary.
 :since: v0.1.00
 		"""
 
-		if (type(tag_dict) == dict):
+		if (type(tag_dict) is dict):
 		#
 			if (tag not in tag_dict): tag_dict[tag] = value
-			elif (type(tag_dict[tag]) == list):
+			elif (type(tag_dict[tag]) is list):
 			#
 				if (value not in tag_dict[tag]): tag_dict[tag].append(value)
 			#

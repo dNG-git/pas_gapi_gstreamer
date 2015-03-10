@@ -31,8 +31,13 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
+from gi.repository import Gst
+
+from dNG.pas.data.byte_buffer import ByteBuffer
+from dNG.pas.data.settings import Settings
 from dNG.pas.data.media.abstract import Abstract
 from dNG.pas.data.media.container_metadata import ContainerMetadata
+from dNG.pas.runtime.io_exception import IOException
 from dNG.pas.runtime.value_exception import ValueException
 from .gstreamer import Gstreamer
 
@@ -65,6 +70,19 @@ Constructor __init__(GstVideo)
 
 		Abstract.__init__(self)
 		Gstreamer.__init__(self)
+
+		self.thumbnail_position_percentage = 0.05
+		"""
+Position in percent where to generate a thumbnail from.
+		"""
+
+		self.supported_features['thumbnail'] = True
+
+		thumbnail_position_percentage = Settings.get("pas_gst_thumbnail_position_percentage", 0)
+
+		if (thumbnail_position_percentage > 0
+		    and thumbnail_position_percentage <= 100
+		   ): self.thumbnail_position_percentage = (thumbnail_position_percentage / 100)
 	#
 
 	def get_metadata(self):
@@ -78,6 +96,70 @@ Return the metadata for this URL.
 
 		_return = Gstreamer.get_metadata(self)
 		if (not isinstance(_return, ContainerMetadata)): raise ValueException("Metadata do not correspond to video")
+		return _return
+	#
+
+	def get_thumbnail(self, mimetype = "image/jpeg"):
+	#
+		"""
+Returns a thumbnail of the given mimetype.
+
+:return: (object) Buffer object
+:since:  v0.1.03
+		"""
+
+		if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_thumbnail({1})- (#echo(__LINE__)#)", self, mimetype, context = "pas_gapi_gstreamer")
+		_return = None
+
+		if (self.source_url is None): raise IOException("URL not defined")
+
+		self._ensure_thread_local()
+
+		caps = Gst.Caps.from_string(mimetype)
+		pipeline = Gst.ElementFactory.make("playbin")
+
+		audio_fakesink = Gst.ElementFactory.make("fakesink")
+		video_fakesink = Gst.ElementFactory.make("fakesink")
+
+		pipeline.set_property("audio-sink", audio_fakesink)
+		pipeline.set_property("video-sink", video_fakesink)
+
+		pipeline.set_property("uri", self.source_url)
+
+		try:
+		#
+			pipeline.set_state(Gst.State.PAUSED)
+			state_result = pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0]
+
+			if (state_result == Gst.StateChangeReturn.NO_PREROLL):
+			#
+				pipeline.set_state(Gst.State.PLAYING)
+				state_result = pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0]
+			#
+
+			if (state_result != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to set up playback")
+
+			duration = pipeline.query_duration(Gst.Format.TIME)[1]
+
+			if (duration > 0): seek_pos = duration * self.thumbnail_position_percentage
+			else: seek_pos = 0
+
+			pipeline.seek_simple(Gst.Format.TIME, (Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT), seek_pos)
+
+			if (pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0] != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to seek to start")
+
+			sample = pipeline.emit("convert-sample", caps)
+			_buffer = (None if (sample is None) else sample.get_buffer())
+
+			if (_buffer is not None):
+			#
+				_return = ByteBuffer()
+				_return.write(_buffer.extract_dup(0, _buffer.get_size()))
+				_return.seek(0)
+			#
+		#
+		finally: pipeline.set_state(Gst.State.NULL)
+
 		return _return
 	#
 #

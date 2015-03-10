@@ -61,7 +61,7 @@ Constructor __init__(GstAudioMetadata)
 		# pylint: disable=star-args
 
 		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['audio'][0]['codec'])
-		if (mimetype_definition == None): mimetype_definition = { "type": gst_metadata['audio'][0]['codec'], "class": gst_metadata['audio'][0]['codec'].split("/", 1)[0] }
+		if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['audio'][0]['codec'], "class": gst_metadata['audio'][0]['codec'].split("/", 1)[0] }
 		if (mimetype_definition['class'] != "audio"): LogLine.debug("Metadata '{0}' do not correspond to audio".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
