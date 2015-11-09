@@ -33,6 +33,10 @@ https://www.direct-netware.de/redirect?licenses;gpl
 
 # pylint: disable=import-error
 
+import gi
+gi.require_version("Gst", "1.0")
+gi.require_version("GstPbutils", "1.0")
+
 from gi.repository import Gst, GstPbutils
 from threading import local
 import sys
@@ -220,7 +224,7 @@ out.
 					     ): self.metadata = GstImageMetadata(self.source_url, self.local.metadata)
 					else: self.metadata = GstContainerMetadata(self.source_url, self.local.metadata)
 				#
-				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery completed")
+				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery for '{0}' completed".format(self.source_url))
 				else:
 				#
 					self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", gst_result, context = "pas_gapi_gstreamer")
