@@ -155,7 +155,6 @@ Returns a thumbnail of the given mimetype.
 			#
 				_return = ByteBuffer()
 				_return.write(_buffer.extract_dup(0, _buffer.get_size()))
-				_return.seek(0)
 			#
 		#
 		finally: pipeline.set_state(Gst.State.NULL)
