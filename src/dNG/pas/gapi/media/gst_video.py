@@ -31,6 +31,9 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
+import gi
+gi.require_version("Gst", "1.0")
+
 from gi.repository import Gst
 
 from dNG.pas.data.byte_buffer import ByteBuffer
