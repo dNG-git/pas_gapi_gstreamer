@@ -46,13 +46,15 @@ from dNG.pas.data.media.abstract import Abstract
 from dNG.pas.data.media.gst_audio_metadata import GstAudioMetadata
 from dNG.pas.data.media.gst_container_metadata import GstContainerMetadata
 from dNG.pas.data.media.gst_image_metadata import GstImageMetadata
+from dNG.pas.gapi.callback_context_mixin import CallbackContextMixin
 from dNG.pas.gapi.glib import Glib
 from dNG.pas.gapi.mainloop.gobject import Gobject as GobjectMainloop
 from dNG.pas.module.named_loader import NamedLoader
 from dNG.pas.runtime.exception_log_trap import ExceptionLogTrap
 from dNG.pas.runtime.io_exception import IOException
+from dNG.pas.runtime.thread_lock import ThreadLock
 
-class Gstreamer(Abstract):
+class Gstreamer(CallbackContextMixin, Abstract):
 #
 	"""
 This class provides access to GStreamer.
@@ -72,9 +74,13 @@ This class provides access to GStreamer.
 	"""
 Multi-value type name
 	"""
-	debug_disabled = False
+	debug_mode = False
 	"""
-True if GStreamer debugging has been disabled.
+True to run GStreamer in debug mode.
+	"""
+	_lock = ThreadLock()
+	"""
+Thread safety lock
 	"""
 
 	def __init__(self):
@@ -84,6 +90,9 @@ Constructor __init__(Gstreamer)
 
 :since: v0.1.00
 		"""
+
+		Abstract.__init__(self)
+		CallbackContextMixin.__init__(self)
 
 		self.discovery_timeout = 5
 		"""
@@ -119,12 +128,17 @@ GStreamer source URI
 		Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.get("path_data")))
 		Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.get("path_data")))
 
-		if (not Settings.get("pas_gst_debug_enabled", False)
-		    and (not Gstreamer.debug_disabled)
-		   ):
+		with Gstreamer._lock:
 		#
-			Gst.debug_set_default_threshold(Gst.DebugLevel.NONE)
-			Gstreamer.debug_disabled = True
+			gst_debug_enabled = Settings.get("pas_gst_debug_enabled", False)
+
+			if (Gstreamer.debug_mode != gst_debug_enabled):
+			#
+				Gst.debug_set_default_threshold(Gst.DebugLevel.DEBUG if (gst_debug_enabled) else Gst.DebugLevel.NONE)
+				Gstreamer.debug_mode = gst_debug_enabled
+			#
+
+			self._init_gst()
 		#
 
 		discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 0))
@@ -140,30 +154,6 @@ Destructor __del__(Gstreamer)
 		"""
 
 		self.stop()
-	#
-
-	def _ensure_thread_local(self):
-	#
-		"""
-For thread safety some variables are defined per thread. This method makes
-sure that these variables are defined.
-
-:since: v0.1.00
-		"""
-
-		# pylint: disable=broad-except,no-member
-
-		if (not hasattr(self.local, "libversion")):
-		#
-			self.local.libversion = None
-
-			with ExceptionLogTrap("pas_gapi_gstreamer"):
-			#
-				Gst.init(sys.argv)
-				self.local.libversion = Gst.version_string()
-				if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}._ensure_thread_local()- reporting: {1} ready", self, self.local.libversion, context = "pas_gapi_gstreamer")
-			#
-		#
 	#
 
 	def get_metadata(self):
@@ -184,20 +174,32 @@ out.
 		#
 			if (self.source_url is None): raise IOException("URL not defined")
 
-			self._ensure_thread_local()
-
-			gst_discoverer = GstPbutils.Discoverer()
-			gst_discoverer.set_property("timeout", (self.discovery_timeout * Gst.SECOND))
-			gst_discoverer_info = gst_discoverer.discover_uri(self.source_url)
-
-			if (gst_discoverer_info is not None):
+			with self:
 			#
-				gst_result = gst_discoverer_info.get_result()
+				gst_discoverer = GstPbutils.Discoverer()
+				gst_discoverer.set_property("timeout", (self.discovery_timeout * Gst.SECOND))
+
+				on_discovered_event = gst_discoverer.connect("discovered", self._on_discovered)
+
+				gst_discoverer.start()
+
+				gst_discoverer.discover_uri_async(self.source_url)
+
+				if (self.log_handler is not None and Gstreamer.debug_mode):
+				#
+					self.log_handler.debug("GStreamer discovery started for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
+				#
+
+				self._callback_event.wait(1 + self.discovery_timeout)
+
+				if (self._callback_result is None): raise IOException("GStreamer discovery failed")
+
+				gst_result = self._callback_result.get_result()
 
 				if (gst_result == GstPbutils.DiscovererResult.OK or gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS):
 				#
 					if (gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS and self.log_handler is not None):
-					# 
+					#
 						self.log_handler.warning("GStreamer discovery detected missing plugins for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 					#
 
@@ -206,12 +208,12 @@ out.
 					                        "video": [ ],
 					                        "text": [ ],
 					                        "other": [ ],
-					                        "seekable": gst_discoverer_info.get_seekable(),
+					                        "seekable": self._callback_result.get_seekable(),
 					                        "tags": { }
 					                      }
 
-					self.local.metadata['length'] = (gst_discoverer_info.get_duration() / Gst.SECOND)
-					self._parse_gst_stream_list(gst_discoverer_info.get_stream_info())
+					self.local.metadata['length'] = (self._callback_result.get_duration() / Gst.SECOND)
+					self._parse_gst_stream_list(self._callback_result.get_stream_info())
 
 					if (self.local.metadata['container'] is None
 					    and len(self.local.metadata['audio']) == 1
@@ -227,13 +229,45 @@ out.
 				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery for '{0}' completed".format(self.source_url))
 				else:
 				#
-					self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", gst_result, context = "pas_gapi_gstreamer")
+					if (self.log_handler is not None): self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", gst_result, context = "pas_gapi_gstreamer")
 					raise IOException("GStreamer discovery failed")
+				#
+
+				gst_discoverer.disconnect(on_discovered_event)
+
+				if (self.log_handler is not None and Gstreamer.debug_mode):
+				#
+					self.log_handler.debug("GStreamer discovery finished for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
+				#
+
+				self._callback_result = None
+				with ExceptionLogTrap("pas_gapi_gstreamer"): gst_discoverer.stop()
+
+				if (self.log_handler is not None and Gstreamer.debug_mode):
+				#
+					self.log_handler.debug("GStreamer discovery stopped for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 				#
 			#
 		#
 
 		return self.metadata
+	#
+
+	def _init_gst(self):
+	#
+		"""
+Initializes the GStreamer framework in the GLib MainLoop thread.
+
+:since: v0.1.03
+		"""
+
+		if (not Gst.is_initialized()):
+		#
+			if (not Gst.init_check(sys.argv)): raise IOException("GStreamer initialization failed")
+
+			gst_version = Gst.version_string()
+			if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.__init__()- reporting: {1} ready", self, gst_version, context = "pas_gapi_gstreamer")
+		#
 	#
 
 	def _parse_gst_caps(self, caps):
@@ -514,6 +548,30 @@ Parses the GStreamer tag data.
 		#
 
 		return True
+	#
+
+	def _on_discovered(self, discoverer, discoverer_info, discoverer_error, *args):
+	#
+		"""
+Callback for "discovered" signal.
+
+:param discoverer: The GstDiscoverer
+:param discoverer_info: The results GstDiscovererInfo
+:param discoverer_error: GError, which will be non-NULL if an error occurred
+       during discovery.
+:param discoverer_event: Python thread-local GstDiscoverer event
+
+:since: v0.1.04
+		"""
+
+		if (discoverer_info is not None):
+		#
+			self._callback_result = discoverer_info
+			self._callback_event.set()
+		#
+		elif (discoverer_error is not None
+			  and self.log_handler is not None
+			 ): self.log_handler.debug("GStreamer discovery of '{0}' reports error '{1}'", self.source_url, discoverer_error, context = "pas_gapi_gstreamer")
 	#
 
 	def stop(self, params = None, last_return = None):
