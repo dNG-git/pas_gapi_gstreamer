@@ -74,10 +74,17 @@ Constructor __init__(GstVideo)
 		Abstract.__init__(self)
 		Gstreamer.__init__(self)
 
+		self.playback_control_timeout = 5
+		"""
+Playback control command timeout.
+		"""
 		self.thumbnail_position_percentage = 0.05
 		"""
 Position in percent where to generate a thumbnail from.
 		"""
+
+		playback_control_timeout = float(Settings.get("pas_gst_playback_control_timeout", 0))
+		if (playback_control_timeout > 0): self.playback_control_timeout = playback_control_timeout
 
 		self.supported_features['thumbnail'] = True
 
@@ -116,42 +123,40 @@ Returns a thumbnail of the given mimetype.
 
 		if (self.source_url is None): raise IOException("URL not defined")
 
-		self._ensure_thread_local()
-
 		caps = Gst.Caps.from_string(mimetype)
-		pipeline = Gst.ElementFactory.make("playbin")
+		self.pipeline = Gst.ElementFactory.make("playbin")
 
 		audio_fakesink = Gst.ElementFactory.make("fakesink")
 		video_fakesink = Gst.ElementFactory.make("fakesink")
 
-		pipeline.set_property("audio-sink", audio_fakesink)
-		pipeline.set_property("video-sink", video_fakesink)
+		self.pipeline.set_property("audio-sink", audio_fakesink)
+		self.pipeline.set_property("video-sink", video_fakesink)
 
-		pipeline.set_property("uri", self.source_url)
+		self.pipeline.set_property("uri", self.source_url)
 
 		try:
 		#
-			pipeline.set_state(Gst.State.PAUSED)
-			state_result = pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0]
+			self.pipeline.set_state(Gst.State.PAUSED)
+			state_result = self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0]
 
 			if (state_result == Gst.StateChangeReturn.NO_PREROLL):
 			#
-				pipeline.set_state(Gst.State.PLAYING)
-				state_result = pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0]
+				self.pipeline.set_state(Gst.State.PLAYING)
+				state_result = self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0]
 			#
 
 			if (state_result != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to set up playback")
 
-			duration = pipeline.query_duration(Gst.Format.TIME)[1]
+			duration = self.pipeline.query_duration(Gst.Format.TIME)[1]
 
 			if (duration > 0): seek_pos = duration * self.thumbnail_position_percentage
 			else: seek_pos = 0
 
-			pipeline.seek_simple(Gst.Format.TIME, (Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT), seek_pos)
+			self.pipeline.seek_simple(Gst.Format.TIME, (Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT), seek_pos)
 
-			if (pipeline.get_state(self.discovery_timeout * Gst.SECOND)[0] != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to seek to start")
+			if (self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0] != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to seek to start")
 
-			sample = pipeline.emit("convert-sample", caps)
+			sample = self.pipeline.emit("convert-sample", caps)
 			_buffer = (None if (sample is None) else sample.get_buffer())
 
 			if (_buffer is not None):
@@ -159,8 +164,9 @@ Returns a thumbnail of the given mimetype.
 				_return = ByteBuffer()
 				_return.write(_buffer.extract_dup(0, _buffer.get_size()))
 			#
+			elif (self.log_handler is not None): self.log_handler.warning("GStreamer has not successfully received a tumbnail buffer for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 		#
-		finally: pipeline.set_state(Gst.State.NULL)
+		finally: self.pipeline.set_state(Gst.State.NULL)
 
 		return _return
 	#
