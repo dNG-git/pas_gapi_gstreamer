@@ -49,7 +49,7 @@ GStreamer mixin for metadata to provide some helper methods.
 	def _parse_tag(tag):
 	#
 		"""
-Parses a string or list of strings from a GStreamer tag.
+Parses a value or list of values of a GStreamer tag.
 
 :param tag: GStreamer tag
 
@@ -57,7 +57,18 @@ Parses a string or list of strings from a GStreamer tag.
 :since:  v0.1.00
 		"""
 
-		return (", ".join(tag) if (type(tag) is list) else tag)
+		_return = ""
+
+		if (type(tag) is list):
+		#
+			tag_list = [ ]
+			for tag_element in tag: tag_list.append(str(tag_element))
+
+			_return = ", ".join(tag_list)
+		#
+		else: _return = str(tag)
+
+		return (", ".join(tag) if (type(tag) is list) else str(tag))
 	#
 #
 
