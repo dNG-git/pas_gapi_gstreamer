@@ -31,61 +31,47 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-from dNG.pas.data.binary import Binary
-from dNG.pas.data.mime_type import MimeType
-from dNG.pas.data.logging.log_line import LogLine
-from .video_stream_metadata import VideoStreamMetadata
+from dNG.data.logging.log_line import LogLine
+from dNG.data.mime_type import MimeType
 
-class GstVideoStreamMetadata(VideoStreamMetadata):
+from .image_metadata import ImageMetadata
+
+class GstImageMetadata(ImageMetadata):
 #
 	"""
-This class provides access to GStreamer video stream metadata.
+This class provides access to GStreamer image metadata.
 
-:author:     direct Netware Group
+:author:     direct Netware Group et al.
 :copyright:  (C) direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
-:since:      v0.1.00
+:since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
 	"""
 
-	def __init__(self, url, gst_stream_metadata):
+	def __init__(self, url, gst_metadata):
 	#
 		"""
-Constructor __init__(GstVideoStreamMetadata)
+Constructor __init__(GstImageMetadata)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		# pylint: disable=star-args
 
-		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
-		if (mimetype_definition is None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "video"): LogLine.debug("Metadata '{0}' do not correspond to video".format(mimetype_definition['type']), context = "pas_media")
+		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['video'][0]['codec'])
+		if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['video'][0]['codec'], "class": gst_metadata['video'][0]['codec'].split("/", 1)[0] }
+		if (mimetype_definition['class'] != "image"): LogLine.debug("Metadata '{0}' do not correspond to an image".format(mimetype_definition['type']), context = "pas_media")
 
 		kwargs = { }
 
-		kwargs['codec'] = gst_stream_metadata['codec']
-		if (gst_stream_metadata['bitrate'] > 0): kwargs['bitrate'] = gst_stream_metadata['bitrate']
-		if (gst_stream_metadata['depth'] > 0): kwargs['bpp'] = gst_stream_metadata['depth']
-		if ("height" in gst_stream_metadata): kwargs['height'] = gst_stream_metadata['height']
+		if ("height" in gst_metadata['video'][0]): kwargs['height'] = gst_metadata['video'][0]['height']
 		kwargs['mimeclass'] = mimetype_definition['class']
 		kwargs['mimetype'] = mimetype_definition['type']
+		if ("width" in gst_metadata['video'][0]): kwargs['width'] = gst_metadata['video'][0]['width']
 
-		framerate = float(gst_stream_metadata['framerate'])
-		if (framerate > 0): kwargs['framerate'] = framerate
-
-		if ("profile" in gst_stream_metadata):
-		#
-			profile = Binary.str(gst_stream_metadata['profile']).lower()
-			if ("level" in gst_stream_metadata): profile += "-{0}".format(gst_stream_metadata['level'].lower())
-			kwargs['codec_profile'] = profile
-		#
-
-		if ("width" in gst_stream_metadata): kwargs['width'] = gst_stream_metadata['width']
-
-		VideoStreamMetadata.__init__(self, url, **kwargs)
+		ImageMetadata.__init__(self, url, **kwargs)
 	#
 #
 

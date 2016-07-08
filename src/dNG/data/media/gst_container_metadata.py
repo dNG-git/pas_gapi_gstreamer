@@ -31,20 +31,24 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-from dNG.pas.data.mime_type import MimeType
-from dNG.pas.data.logging.log_line import LogLine
-from .image_metadata import ImageMetadata
+from dNG.data.mime_type import MimeType
 
-class GstImageMetadata(ImageMetadata):
+from .container_metadata import ContainerMetadata
+from .gst_audio_stream_metadata import GstAudioStreamMetadata
+from .gst_other_stream_metadata import GstOtherStreamMetadata
+from .gst_text_stream_metadata import GstTextStreamMetadata
+from .gst_video_stream_metadata import GstVideoStreamMetadata
+
+class GstContainerMetadata(ContainerMetadata):
 #
 	"""
-This class provides access to GStreamer image metadata.
+This class provides access to GStreamer container metadata.
 
-:author:     direct Netware Group
+:author:     direct Netware Group et al.
 :copyright:  (C) direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
-:since:      v0.1.00
+:since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
 	"""
@@ -52,25 +56,29 @@ This class provides access to GStreamer image metadata.
 	def __init__(self, url, gst_metadata):
 	#
 		"""
-Constructor __init__(GstImageMetadata)
+Constructor __init__(GstContainerMetadata)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		# pylint: disable=star-args
 
-		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['video'][0]['codec'])
-		if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['video'][0]['codec'], "class": gst_metadata['video'][0]['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "image"): LogLine.debug("Metadata '{0}' do not correspond to an image".format(mimetype_definition['type']), context = "pas_media")
+		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['container']['codec'])
+		if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['container']['codec'], "class": gst_metadata['container']['codec'].split("/", 1)[0] }
 
 		kwargs = { }
 
-		if ("height" in gst_metadata['video'][0]): kwargs['height'] = gst_metadata['video'][0]['height']
+		if ("encoder" in gst_metadata['tags']): kwargs['encoder'] = gst_metadata['tags']['encoder']
+		kwargs['length'] = gst_metadata['length']
 		kwargs['mimeclass'] = mimetype_definition['class']
 		kwargs['mimetype'] = mimetype_definition['type']
-		if ("width" in gst_metadata['video'][0]): kwargs['width'] = gst_metadata['video'][0]['width']
 
-		ImageMetadata.__init__(self, url, **kwargs)
+		ContainerMetadata.__init__(self, url, **kwargs)
+
+		for stream in gst_metadata['audio']: self.audio_streams.append(GstAudioStreamMetadata(url, stream))
+		for stream in gst_metadata['video']: self.video_streams.append(GstVideoStreamMetadata(url, stream))
+		for stream in gst_metadata['text']: self.text_streams.append(GstTextStreamMetadata(url, stream))
+		for stream in gst_metadata['other']: self.other_streams.append(GstOtherStreamMetadata(url, stream))
 	#
 #
 

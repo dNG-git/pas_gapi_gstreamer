@@ -41,29 +41,29 @@ from gi.repository import Gst, GstPbutils
 from threading import local
 import sys
 
-from dNG.pas.data.settings import Settings
-from dNG.pas.data.media.abstract import Abstract
-from dNG.pas.data.media.gst_audio_metadata import GstAudioMetadata
-from dNG.pas.data.media.gst_container_metadata import GstContainerMetadata
-from dNG.pas.data.media.gst_image_metadata import GstImageMetadata
-from dNG.pas.gapi.callback_context_mixin import CallbackContextMixin
-from dNG.pas.gapi.glib import Glib
-from dNG.pas.gapi.mainloop.gobject import Gobject as GobjectMainloop
-from dNG.pas.module.named_loader import NamedLoader
-from dNG.pas.runtime.exception_log_trap import ExceptionLogTrap
-from dNG.pas.runtime.io_exception import IOException
-from dNG.pas.runtime.thread_lock import ThreadLock
+from dNG.data.media.abstract import Abstract
+from dNG.data.media.gst_audio_metadata import GstAudioMetadata
+from dNG.data.media.gst_container_metadata import GstContainerMetadata
+from dNG.data.media.gst_image_metadata import GstImageMetadata
+from dNG.data.settings import Settings
+from dNG.gapi.callback_context_mixin import CallbackContextMixin
+from dNG.gapi.glib import Glib
+from dNG.gapi.mainloop.gobject import Gobject as GobjectMainloop
+from dNG.module.named_loader import NamedLoader
+from dNG.runtime.exception_log_trap import ExceptionLogTrap
+from dNG.runtime.io_exception import IOException
+from dNG.runtime.thread_lock import ThreadLock
 
 class Gstreamer(CallbackContextMixin, Abstract):
 #
 	"""
 This class provides access to GStreamer.
 
-:author:     direct Netware Group
+:author:     direct Netware Group et al.
 :copyright:  (C) direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
-:since:      v0.1.00
+:since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
 	"""
@@ -88,7 +88,7 @@ Thread safety lock
 		"""
 Constructor __init__(Gstreamer)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		Abstract.__init__(self)
@@ -150,7 +150,7 @@ GStreamer source URI
 		"""
 Destructor __del__(Gstreamer)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		self.stop()
@@ -163,7 +163,7 @@ Get the metadata for the given source file. IOError will occur if it times
 out.
 
 :return: (object) Metadata; None on error
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		# pylint: disable=no-member
@@ -258,7 +258,7 @@ out.
 		"""
 Initializes the GStreamer framework in the GLib MainLoop thread.
 
-:since: v0.1.03
+:since: v0.2.00
 		"""
 
 		if (not Gst.is_initialized()):
@@ -278,7 +278,7 @@ Parses the GStreamer caps definition.
 :param caps: GStreamer caps definition
 
 :return: (dict) GStreamer codec data
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		_return = { "codec": "", "gstcaps": "" }
@@ -309,7 +309,7 @@ Parses the GStreamer caps codec for a matching mimetype identifier.
 :param codec: GStreamer codec name
 
 :return: (str) GStreamer codec / Mimetype identifier
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		_return = codec
@@ -341,7 +341,7 @@ Parses the GStreamer caps dict to identify a matching mimetype.
 :param mimetype_definition: GStreamer caps to mimetype definition
 
 :return: (str) MimeType; None on error
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		_return = None
@@ -398,7 +398,7 @@ Parses the GStreamer stream list for contained streams.
 
 :param stream_info: GStreamer stream info
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		while (stream_info is not None):
@@ -415,7 +415,7 @@ Parses the GStreamer stream info.
 
 :param stream_info: GStreamer stream info
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		stream_data = { }
@@ -485,7 +485,7 @@ Parses a GStreamer structure recursively.
 :param structure: GStreamer structure
 
 :return: (dict) GStreamer structure content
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		# pylint: disable=broad-except,no-member
@@ -531,7 +531,7 @@ Parses the GStreamer tag data.
 :param tag: GStreamer tag to be parsed
 
 :return: (bool) True if the foreach operation should continue.
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		if (type(tag_list) is Gst.TagList and type(tag) is str):
@@ -561,7 +561,7 @@ Callback for "discovered" signal.
        during discovery.
 :param discoverer_event: Python thread-local GstDiscoverer event
 
-:since: v0.1.04
+:since: v0.2.00
 		"""
 
 		if (discoverer_info is not None):
@@ -582,7 +582,7 @@ Stop an active GStreamer process.
 :param params: Parameter specified
 :param last_return: The return value from the last hook called.
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		return last_return
@@ -596,7 +596,7 @@ Initializes an media instance for the given URL.
 :param url: URL
 
 :return: (bool) True on success
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		self.metadata = None
@@ -615,7 +615,7 @@ Adds not already added tags to the given dictionary.
 :param tag: GStreamer tag name
 :param value: Tag value
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		if (type(tag_dict) is dict):

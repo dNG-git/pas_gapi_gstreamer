@@ -31,8 +31,9 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-from dNG.pas.data.mime_type import MimeType
-from dNG.pas.data.logging.log_line import LogLine
+from dNG.data.logging.log_line import LogLine
+from dNG.data.mime_type import MimeType
+
 from .audio_metadata import AudioMetadata
 from .gst_metadata_mixin import GstMetadataMixin
 
@@ -41,11 +42,11 @@ class GstAudioMetadata(AudioMetadata, GstMetadataMixin):
 	"""
 This class provides access to GStreamer audio metadata.
 
-:author:     direct Netware Group
+:author:     direct Netware Group et al.
 :copyright:  (C) direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
-:since:      v0.1.00
+:since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
 	"""
@@ -55,7 +56,7 @@ This class provides access to GStreamer audio metadata.
 		"""
 Constructor __init__(GstAudioMetadata)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		# pylint: disable=star-args

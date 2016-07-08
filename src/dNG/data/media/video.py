@@ -31,55 +31,11 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-from dNG.pas.data.media.abstract import Abstract
-from dNG.pas.data.media.audio_metadata import AudioMetadata
-from dNG.pas.runtime.value_exception import ValueException
-from .gstreamer import Gstreamer
+# pylint: disable=unused-import
 
-class GstAudio(Gstreamer, Abstract):
-#
-	"""
-GStreamer implementation of the audio class.
+try: from dNG.gapi.media.gst_video import GstVideo as Video
+except ImportError: Video = None
 
-:author:     direct Netware Group
-:copyright:  direct Netware Group - All rights reserved
-:package:    pas.gapi
-:subpackage: gstreamer
-:since:      v0.1.00
-:license:    https://www.direct-netware.de/redirect?licenses;gpl
-             GNU General Public License 2
-	"""
-
-	X_TYPE = "audio"
-	"""
-Multi-value type name
-	"""
-
-	def __init__(self):
-	#
-		"""
-Constructor __init__(GstAudio)
-
-:since: v0.1.00
-		"""
-
-		Abstract.__init__(self)
-		Gstreamer.__init__(self)
-	#
-
-	def get_metadata(self):
-	#
-		"""
-Return the metadata for this URL.
-
-:return: (object) Metadata object
-:since:  v0.1.00
-		"""
-
-		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, AudioMetadata)): raise ValueException("Metadata do not correspond to audio")
-		return _return
-	#
-#
+if (Video is None): from dNG.runtime.not_implemented_class import NotImplementedClass as Video
 
 ##j## EOF

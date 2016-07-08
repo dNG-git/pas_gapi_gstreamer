@@ -36,12 +36,13 @@ gi.require_version("Gst", "1.0")
 
 from gi.repository import Gst
 
-from dNG.pas.data.byte_buffer import ByteBuffer
-from dNG.pas.data.settings import Settings
-from dNG.pas.data.media.abstract import Abstract
-from dNG.pas.data.media.container_metadata import ContainerMetadata
-from dNG.pas.runtime.io_exception import IOException
-from dNG.pas.runtime.value_exception import ValueException
+from dNG.data.byte_buffer import ByteBuffer
+from dNG.data.media.abstract import Abstract
+from dNG.data.media.container_metadata import ContainerMetadata
+from dNG.data.settings import Settings
+from dNG.runtime.io_exception import IOException
+from dNG.runtime.value_exception import ValueException
+
 from .gstreamer import Gstreamer
 
 class GstVideo(Gstreamer, Abstract):
@@ -49,11 +50,11 @@ class GstVideo(Gstreamer, Abstract):
 	"""
 GStreamer implementation of the video class.
 
-:author:     direct Netware Group
+:author:     direct Netware Group et al.
 :copyright:  direct Netware Group - All rights reserved
 :package:    pas.gapi
 :subpackage: gstreamer
-:since:      v0.1.00
+:since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
 	"""
@@ -68,7 +69,7 @@ Multi-value type name
 		"""
 Constructor __init__(GstVideo)
 
-:since: v0.1.00
+:since: v0.2.00
 		"""
 
 		Abstract.__init__(self)
@@ -101,7 +102,7 @@ Position in percent where to generate a thumbnail from.
 Return the metadata for this URL.
 
 :return: (object) Metadata object
-:since:  v0.1.00
+:since:  v0.2.00
 		"""
 
 		_return = Gstreamer.get_metadata(self)
@@ -115,7 +116,7 @@ Return the metadata for this URL.
 Returns a thumbnail of the given mimetype.
 
 :return: (object) Buffer object
-:since:  v0.1.03
+:since:  v0.2.00
 		"""
 
 		if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_thumbnail({1})- (#echo(__LINE__)#)", self, mimetype, context = "pas_gapi_gstreamer")

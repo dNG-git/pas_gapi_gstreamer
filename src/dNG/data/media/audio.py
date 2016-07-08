@@ -31,45 +31,11 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-class GstMetadataMixin(object):
-#
-	"""
-GStreamer mixin for metadata to provide some helper methods.
+# pylint: disable=unused-import
 
-:author:     direct Netware Group
-:copyright:  (C) direct Netware Group - All rights reserved
-:package:    pas.gapi
-:subpackage: gstreamer
-:since:      v0.1.00
-:license:    https://www.direct-netware.de/redirect?licenses;gpl
-             GNU General Public License 2
-	"""
+try: from dNG.gapi.media.gst_audio import GstAudio as Audio
+except ImportError: Audio = None
 
-	@staticmethod
-	def _parse_tag(tag):
-	#
-		"""
-Parses a value or list of values of a GStreamer tag.
-
-:param tag: GStreamer tag
-
-:return: (str) Parsed and concatenated string
-:since:  v0.1.00
-		"""
-
-		_return = ""
-
-		if (type(tag) is list):
-		#
-			tag_list = [ ]
-			for tag_element in tag: tag_list.append(str(tag_element))
-
-			_return = ", ".join(tag_list)
-		#
-		else: _return = str(tag)
-
-		return (", ".join(tag) if (type(tag) is list) else str(tag))
-	#
-#
+if (Audio is None): from dNG.runtime.not_implemented_class import NotImplementedClass as Audio
 
 ##j## EOF
