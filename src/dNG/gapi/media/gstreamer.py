@@ -110,7 +110,7 @@ GObject mainloop
 		"""
 Local data handle
 		"""
-		self.log_handler = NamedLoader.get_singleton("dNG.pas.data.logging.LogHandler", False)
+		self.log_handler = NamedLoader.get_singleton("dNG.data.logging.LogHandler", False)
 		"""
 The LogHandler is called whenever debug messages should be logged or errors
 happened.
