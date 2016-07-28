@@ -37,15 +37,15 @@ gi.require_version("Gst", "1.0")
 from gi.repository import Gst
 
 from dNG.data.byte_buffer import ByteBuffer
-from dNG.data.media.abstract import Abstract
-from dNG.data.media.container_metadata import ContainerMetadata
 from dNG.data.settings import Settings
+from dNG.gapi.media.gstreamer import Gstreamer
 from dNG.runtime.io_exception import IOException
 from dNG.runtime.value_exception import ValueException
 
-from .gstreamer import Gstreamer
+from .abstract_video import AbstractVideo
+from .container_metadata import ContainerMetadata
 
-class GstVideo(Gstreamer, Abstract):
+class GstVideo(Gstreamer, AbstractVideo):
 #
 	"""
 GStreamer implementation of the video class.
@@ -72,7 +72,7 @@ Constructor __init__(GstVideo)
 :since: v0.2.00
 		"""
 
-		Abstract.__init__(self)
+		AbstractVideo.__init__(self)
 		Gstreamer.__init__(self)
 
 		self.playback_control_timeout = 5
