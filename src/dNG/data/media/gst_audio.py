@@ -31,13 +31,13 @@ https://www.direct-netware.de/redirect?licenses;gpl
 #echo(__FILEPATH__)#
 """
 
-from dNG.data.media.abstract import Abstract
-from dNG.data.media.audio_metadata import AudioMetadata
+from dNG.gapi.media.gstreamer import Gstreamer
 from dNG.runtime.value_exception import ValueException
 
-from .gstreamer import Gstreamer
+from .abstract_audio import AbstractAudio
+from .audio_metadata import AudioMetadata
 
-class GstAudio(Gstreamer, Abstract):
+class GstAudio(Gstreamer, AbstractAudio):
 #
 	"""
 GStreamer implementation of the audio class.
@@ -64,7 +64,7 @@ Constructor __init__(GstAudio)
 :since: v0.2.00
 		"""
 
-		Abstract.__init__(self)
+		AbstractAudio.__init__(self)
 		Gstreamer.__init__(self)
 	#
 
