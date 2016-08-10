@@ -190,11 +190,11 @@ out.
 					self.log_handler.debug("GStreamer discovery started for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 				#
 
-				self._callback_event.wait(1 + self.discovery_timeout)
+				self._callback_result_event.wait(1 + self.discovery_timeout)
+				if (not self._callback_result_event.is_result_set()): raise IOException("GStreamer discovery failed")
 
-				if (self._callback_result is None): raise IOException("GStreamer discovery failed")
-
-				gst_result = self._callback_result.get_result()
+				gst_discoverer_info = self._callback_result_event.get_result()
+				gst_result = gst_discoverer_info.get_result()
 
 				if (gst_result == GstPbutils.DiscovererResult.OK or gst_result == GstPbutils.DiscovererResult.MISSING_PLUGINS):
 				#
@@ -208,12 +208,12 @@ out.
 					                        "video": [ ],
 					                        "text": [ ],
 					                        "other": [ ],
-					                        "seekable": self._callback_result.get_seekable(),
+					                        "seekable": gst_discoverer_info.get_seekable(),
 					                        "tags": { }
 					                      }
 
-					self.local.metadata['length'] = (self._callback_result.get_duration() / Gst.SECOND)
-					self._parse_gst_stream_list(self._callback_result.get_stream_info())
+					self.local.metadata['length'] = (gst_discoverer_info.get_duration() / Gst.SECOND)
+					self._parse_gst_stream_list(gst_discoverer_info.get_stream_info())
 
 					if (self.local.metadata['container'] is None
 					    and len(self.local.metadata['audio']) == 1
@@ -229,7 +229,7 @@ out.
 				elif (gst_result == GstPbutils.DiscovererResult.TIMEOUT): raise IOException("Timeout occured before discovery for '{0}' completed".format(self.source_url))
 				else:
 				#
-					if (self.log_handler is not None): self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", gst_result, context = "pas_gapi_gstreamer")
+					if (self.log_handler is not None): self.log_handler.debug("GStreamer discovery of '{0}' failed with reason '{1}'", self.source_url, gst_result, context = "pas_gapi_gstreamer")
 					raise IOException("GStreamer discovery failed")
 				#
 
@@ -240,7 +240,6 @@ out.
 					self.log_handler.debug("GStreamer discovery finished for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 				#
 
-				self._callback_result = None
 				with ExceptionLogTrap("pas_gapi_gstreamer"): gst_discoverer.stop()
 
 				if (self.log_handler is not None and Gstreamer.debug_mode):
@@ -564,11 +563,7 @@ Callback for "discovered" signal.
 :since: v0.2.00
 		"""
 
-		if (discoverer_info is not None):
-		#
-			self._callback_result = discoverer_info
-			self._callback_event.set()
-		#
+		if (discoverer_info is not None): self._callback_result_event.set_result(discoverer_info)
 		elif (discoverer_error is not None
 			  and self.log_handler is not None
 			 ): self.log_handler.debug("GStreamer discovery of '{0}' reports error '{1}'", self.source_url, discoverer_error, context = "pas_gapi_gstreamer")
