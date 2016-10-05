@@ -569,6 +569,28 @@ Callback for "discovered" signal.
 			 ): self.log_handler.debug("GStreamer discovery of '{0}' reports error '{1}'", self.source_url, discoverer_error, context = "pas_gapi_gstreamer")
 	#
 
+	def _set_pipeline_state(self, state, timeout = None):
+	#
+		"""
+Sets the given state to the current GStreamer pipeline and waits for
+asynchronous state changes if timeout is given.
+
+:param state: Gst.State value
+:param timeout: Timeout in seconds to wait for asynchronous state changes
+
+:return: (object) Gst.StateChangeReturn value
+:since:  v0.2.00
+		"""
+
+		_return = self.pipeline.set_state(state)
+
+		if (timeout is not None
+		    and _return == Gst.StateChangeReturn.ASYNC
+		   ): _return = self.pipeline.get_state(timeout * Gst.SECOND)[0]
+
+		return _return
+	#
+
 	def stop(self, params = None, last_return = None):
 	#
 		"""
