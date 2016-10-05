@@ -124,50 +124,65 @@ Returns a thumbnail of the given mimetype.
 
 		if (self.source_url is None): raise IOException("URL not defined")
 
-		caps = Gst.Caps.from_string(mimetype)
-		self.pipeline = Gst.ElementFactory.make("playbin")
-
-		audio_fakesink = Gst.ElementFactory.make("fakesink")
-		video_fakesink = Gst.ElementFactory.make("fakesink")
-
-		self.pipeline.set_property("audio-sink", audio_fakesink)
-		self.pipeline.set_property("video-sink", video_fakesink)
-
-		self.pipeline.set_property("uri", self.source_url)
-
-		try:
+		with self:
 		#
-			self.pipeline.set_state(Gst.State.PAUSED)
-			state_result = self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0]
+			self.pipeline = Gst.ElementFactory.make("playbin")
+			Gst.util_set_object_arg(self.pipeline, "flags", "deinterlace+video")
 
-			if (state_result == Gst.StateChangeReturn.NO_PREROLL):
+			self.pipeline.set_property("uri", self.source_url)
+
+			# Ensure we have a raw copy in memory before calling "convert-sample"
+			video_capsfilter = Gst.ElementFactory.make("capsfilter")
+			video_capsfilter.set_property("caps", Gst.Caps.from_string("video/x-raw"))
+			self.pipeline.set_property("video-filter", video_capsfilter)
+
+			video_fakesink = Gst.ElementFactory.make("fakesink")
+			self.pipeline.set_property("video-sink", video_fakesink)
+
+			caps = Gst.Caps.from_string(mimetype)
+
+			try:
 			#
-				self.pipeline.set_state(Gst.State.PLAYING)
-				state_result = self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0]
+				state_result = self._set_pipeline_state(Gst.State.PAUSED, self.playback_control_timeout)
+
+				if (state_result == Gst.StateChangeReturn.NO_PREROLL):
+				#
+					state_result = self._set_pipeline_state(Gst.State.PLAYING, self.playback_control_timeout)
+					self.pipeline.set_state(Gst.State.PAUSED)
+				#
+
+				if (state_result == Gst.StateChangeReturn.FAILURE): raise IOException("Failed to set up playback")
+
+				duration = self.pipeline.query_duration(Gst.Format.TIME)[1]
+
+				if (duration > 0): seek_pos = duration * self.thumbnail_position_percentage
+				else: seek_pos = 0
+
+				if (not self.pipeline.seek_simple(Gst.Format.TIME,
+				                                  (Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT),
+				                                  seek_pos
+				                                 )
+				   ): raise IOException("Failed to seek to thumbnail position")
+
+				self._set_pipeline_state(Gst.State.PLAYING, self.playback_control_timeout)
+				sample = self.pipeline.emit("convert-sample", caps)
+				self.pipeline.set_state(Gst.State.PAUSED)
+
+				_buffer = (None if (sample is None) else sample.get_buffer())
+
+				if (_buffer is not None):
+				#
+					_return = ByteBuffer()
+					_return.write(_buffer.extract_dup(0, _buffer.get_size()))
+				#
+				elif (self.log_handler is not None): self.log_handler.warning("GStreamer has not successfully received a tumbnail buffer for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 			#
-
-			if (state_result != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to set up playback")
-
-			duration = self.pipeline.query_duration(Gst.Format.TIME)[1]
-
-			if (duration > 0): seek_pos = duration * self.thumbnail_position_percentage
-			else: seek_pos = 0
-
-			self.pipeline.seek_simple(Gst.Format.TIME, (Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT), seek_pos)
-
-			if (self.pipeline.get_state(self.playback_control_timeout * Gst.SECOND)[0] != Gst.StateChangeReturn.SUCCESS): raise IOException("Failed to seek to start")
-
-			sample = self.pipeline.emit("convert-sample", caps)
-			_buffer = (None if (sample is None) else sample.get_buffer())
-
-			if (_buffer is not None):
+			finally:
 			#
-				_return = ByteBuffer()
-				_return.write(_buffer.extract_dup(0, _buffer.get_size()))
+				state_result = self._set_pipeline_state(Gst.State.NULL, self.playback_control_timeout)
+				if (state_result == Gst.StateChangeReturn.FAILURE): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.get_thumbnail()- reporting: Failed to clean up", self, context = "pas_gapi_gstreamer")
 			#
-			elif (self.log_handler is not None): self.log_handler.warning("GStreamer has not successfully received a tumbnail buffer for '{0}'", self.source_url, context = "pas_gapi_gstreamer")
 		#
-		finally: self.pipeline.set_state(Gst.State.NULL)
 
 		return _return
 	#
