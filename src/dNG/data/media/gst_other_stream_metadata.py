@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-##j## BOF
 
 """
 direct PAS
@@ -36,8 +35,7 @@ from dNG.data.mime_type import MimeType
 from .stream_metadata import StreamMetadata
 
 class GstOtherStreamMetadata(StreamMetadata):
-#
-	"""
+    """
 This class provides access to GStreamer audio stream metadata.
 
 :author:     direct Netware Group et al.
@@ -47,29 +45,26 @@ This class provides access to GStreamer audio stream metadata.
 :since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
-	"""
+    """
 
-	def __init__(self, url, gst_stream_metadata):
-	#
-		"""
+    def __init__(self, url, gst_stream_metadata):
+        """
 Constructor __init__(GstOtherStreamMetadata)
 
 :since: v0.2.00
-		"""
+        """
 
-		# pylint: disable=star-args
+        # pylint: disable=star-args
 
-		mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
-		if (mimetype_definition is None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
+        mimetype_definition = MimeType.get_instance().get(mimetype = gst_stream_metadata['codec'])
+        if (mimetype_definition is None): mimetype_definition = { "type": gst_stream_metadata['codec'], "class": gst_stream_metadata['codec'].split("/", 1)[0] }
 
-		kwargs = { }
+        kwargs = { }
 
-		kwargs['codec'] = gst_stream_metadata['codec']
-		kwargs['mimeclass'] = mimetype_definition['class']
-		kwargs['mimetype'] = mimetype_definition['type']
+        kwargs['codec'] = gst_stream_metadata['codec']
+        kwargs['mimeclass'] = mimetype_definition['class']
+        kwargs['mimetype'] = mimetype_definition['type']
 
-		StreamMetadata.__init__(self, url, **kwargs)
-	#
+        StreamMetadata.__init__(self, url, **kwargs)
+    #
 #
-
-##j## EOF

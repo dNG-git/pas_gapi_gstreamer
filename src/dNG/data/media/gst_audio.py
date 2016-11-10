@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-##j## BOF
 
 """
 direct PAS
@@ -38,8 +37,7 @@ from .abstract_audio import AbstractAudio
 from .audio_metadata import AudioMetadata
 
 class GstAudio(Gstreamer, AbstractAudio):
-#
-	"""
+    """
 GStreamer implementation of the audio class.
 
 :author:     direct Netware Group et al.
@@ -49,38 +47,34 @@ GStreamer implementation of the audio class.
 :since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
-	"""
+    """
 
-	X_TYPE = "audio"
-	"""
+    X_TYPE = "audio"
+    """
 Multi-value type name
-	"""
+    """
 
-	def __init__(self):
-	#
-		"""
+    def __init__(self):
+        """
 Constructor __init__(GstAudio)
 
 :since: v0.2.00
-		"""
+        """
 
-		AbstractAudio.__init__(self)
-		Gstreamer.__init__(self)
-	#
+        AbstractAudio.__init__(self)
+        Gstreamer.__init__(self)
+    #
 
-	def get_metadata(self):
-	#
-		"""
+    def get_metadata(self):
+        """
 Return the metadata for this URL.
 
 :return: (object) Metadata object
 :since:  v0.2.00
-		"""
+        """
 
-		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, AudioMetadata)): raise ValueException("Metadata do not correspond to audio")
-		return _return
-	#
+        _return = Gstreamer.get_metadata(self)
+        if (not isinstance(_return, AudioMetadata)): raise ValueException("Metadata do not correspond to audio")
+        return _return
+    #
 #
-
-##j## EOF

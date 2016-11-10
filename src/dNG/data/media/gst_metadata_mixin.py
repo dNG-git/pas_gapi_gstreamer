@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-##j## BOF
 
 """
 direct PAS
@@ -32,8 +31,7 @@ https://www.direct-netware.de/redirect?licenses;gpl
 """
 
 class GstMetadataMixin(object):
-#
-	"""
+    """
 GStreamer mixin for metadata to provide some helper methods.
 
 :author:     direct Netware Group et al.
@@ -43,33 +41,28 @@ GStreamer mixin for metadata to provide some helper methods.
 :since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
-	"""
+    """
 
-	@staticmethod
-	def _parse_tag(tag):
-	#
-		"""
+    @staticmethod
+    def _parse_tag(tag):
+        """
 Parses a value or list of values of a GStreamer tag.
 
 :param tag: GStreamer tag
 
 :return: (str) Parsed and concatenated string
 :since:  v0.2.00
-		"""
+        """
 
-		_return = ""
+        _return = ""
 
-		if (type(tag) is list):
-		#
-			tag_list = [ ]
-			for tag_element in tag: tag_list.append(str(tag_element))
+        if (type(tag) is list):
+            tag_list = [ ]
+            for tag_element in tag: tag_list.append(str(tag_element))
 
-			_return = ", ".join(tag_list)
-		#
-		else: _return = str(tag)
+            _return = ", ".join(tag_list)
+        else: _return = str(tag)
 
-		return (", ".join(tag) if (type(tag) is list) else str(tag))
-	#
+        return (", ".join(tag) if (type(tag) is list) else str(tag))
+    #
 #
-
-##j## EOF

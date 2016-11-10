@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-##j## BOF
 
 """
 direct PAS
@@ -37,8 +36,7 @@ from dNG.data.mime_type import MimeType
 from .image_metadata import ImageMetadata
 
 class GstImageMetadata(ImageMetadata):
-#
-	"""
+    """
 This class provides access to GStreamer image metadata.
 
 :author:     direct Netware Group et al.
@@ -48,31 +46,28 @@ This class provides access to GStreamer image metadata.
 :since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
-	"""
+    """
 
-	def __init__(self, url, gst_metadata):
-	#
-		"""
+    def __init__(self, url, gst_metadata):
+        """
 Constructor __init__(GstImageMetadata)
 
 :since: v0.2.00
-		"""
+        """
 
-		# pylint: disable=star-args
+        # pylint: disable=star-args
 
-		mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['video'][0]['codec'])
-		if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['video'][0]['codec'], "class": gst_metadata['video'][0]['codec'].split("/", 1)[0] }
-		if (mimetype_definition['class'] != "image"): LogLine.debug("Metadata '{0}' do not correspond to an image".format(mimetype_definition['type']), context = "pas_media")
+        mimetype_definition = MimeType.get_instance().get(mimetype = gst_metadata['video'][0]['codec'])
+        if (mimetype_definition is None): mimetype_definition = { "type": gst_metadata['video'][0]['codec'], "class": gst_metadata['video'][0]['codec'].split("/", 1)[0] }
+        if (mimetype_definition['class'] != "image"): LogLine.debug("Metadata '{0}' do not correspond to an image".format(mimetype_definition['type']), context = "pas_media")
 
-		kwargs = { }
+        kwargs = { }
 
-		if ("height" in gst_metadata['video'][0]): kwargs['height'] = gst_metadata['video'][0]['height']
-		kwargs['mimeclass'] = mimetype_definition['class']
-		kwargs['mimetype'] = mimetype_definition['type']
-		if ("width" in gst_metadata['video'][0]): kwargs['width'] = gst_metadata['video'][0]['width']
+        if ("height" in gst_metadata['video'][0]): kwargs['height'] = gst_metadata['video'][0]['height']
+        kwargs['mimeclass'] = mimetype_definition['class']
+        kwargs['mimetype'] = mimetype_definition['type']
+        if ("width" in gst_metadata['video'][0]): kwargs['width'] = gst_metadata['video'][0]['width']
 
-		ImageMetadata.__init__(self, url, **kwargs)
-	#
+        ImageMetadata.__init__(self, url, **kwargs)
+    #
 #
-
-##j## EOF

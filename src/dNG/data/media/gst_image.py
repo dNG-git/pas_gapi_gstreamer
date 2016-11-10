@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-##j## BOF
 
 """
 direct PAS
@@ -40,8 +39,7 @@ from .abstract_image import AbstractImage
 from .image_metadata import ImageMetadata
 
 class GstImage(Gstreamer, AbstractImage):
-#
-	"""
+    """
 GStreamer implementation of the image class.
 
 :author:     direct Netware Group et al.
@@ -51,23 +49,21 @@ GStreamer implementation of the image class.
 :since:      v0.2.00
 :license:    https://www.direct-netware.de/redirect?licenses;gpl
              GNU General Public License 2
-	"""
+    """
 
-	def __init__(self):
-	#
-		"""
+    def __init__(self):
+        """
 Constructor __init__(GstImage)
 
 :since: v0.2.00
-		"""
+        """
 
-		AbstractImage.__init__(self)
-		Gstreamer.__init__(self)
-	#
+        AbstractImage.__init__(self)
+        Gstreamer.__init__(self)
+    #
 
-	def copy(self, file_path_name):
-	#
-		"""
+    def copy(self, file_path_name):
+        """
 Creates a copy of the image converting it to match the file extension if
 needed.
 
@@ -75,65 +71,59 @@ needed.
 
 :return: (bool) True on success
 :since:  v0.2.00
-		"""
+        """
 
-		if (self.image is None): raise IOException("Invalid image state")
+        if (self.image is None): raise IOException("Invalid image state")
 
-		raise NotImplementedException()
-	#
+        raise NotImplementedException()
+    #
 
-	def get_metadata(self):
-	#
-		"""
+    def get_metadata(self):
+        """
 Return the metadata for this URL.
 
 :return: (object) Metadata object
 :since:  v0.2.00
-		"""
+        """
 
-		_return = Gstreamer.get_metadata(self)
-		if (not isinstance(_return, ImageMetadata)): raise ValueException("Metadata do not correspond to an image")
-		return _return
-	#
+        _return = Gstreamer.get_metadata(self)
+        if (not isinstance(_return, ImageMetadata)): raise ValueException("Metadata do not correspond to an image")
+        return _return
+    #
 
-	def save(self):
-	#
-		"""
+    def save(self):
+        """
 Saves the image if changed.
 
 :return: (bool) True on success
 :since:  v0.2.00
-		"""
+        """
 
-		return False
-	#
+        return False
+    #
 
-	def set_resize_mode(self, mode):
-	#
-		"""
+    def set_resize_mode(self, mode):
+        """
 Sets the resize mode.
 
 :param mode: Resize mode
 
 :since: v0.2.00
-		"""
+        """
 
-		self.resize_mode = mode
-	#
+        self.resize_mode = mode
+    #
 
-	def set_size(self, width, height):
-	#
-		"""
+    def set_size(self, width, height):
+        """
 Sets the image size (and resizes it).
 
 :param width: Image width
 :param height: Image height
 
 :since: v0.2.00
-		"""
+        """
 
-		raise NotImplementedException()
-	#
+        raise NotImplementedException()
+    #
 #
-
-##j## EOF
