@@ -453,10 +453,12 @@ Parses a GStreamer structure recursively.
 
                 try: _return[key] = (self._parse_gst_structure(structure.get_value(key)) if (field_type == Gst.Structure) else structure.get_value(key))
                 except Exception:
-                    """n// NOTE
+                    """
+---n---
 Workaround for "unknown type GstFraction". We can't handle "GstValueArray" or
 "GstBitmask" here. Last seen with GStreamer 1.2.1.
-                    NOTE_END //n"""
+---n---
+                    """
 
                     if (field_type.name == "GstFraction"):
                         fraction_struct = structure.get_fraction(key)
