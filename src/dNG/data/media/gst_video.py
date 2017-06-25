@@ -81,12 +81,12 @@ Playback control command timeout.
 Position in percent where to generate a thumbnail from.
         """
 
-        playback_control_timeout = float(Settings.get("pas_gst_playback_control_timeout", 0))
+        playback_control_timeout = float(Settings.get("pas_gapi_gstreamer_playback_control_timeout", 0))
         if (playback_control_timeout > 0): self.playback_control_timeout = playback_control_timeout
 
         self.supported_features['thumbnail'] = True
 
-        thumbnail_position_percentage = Settings.get("pas_gst_thumbnail_position_percentage", 0)
+        thumbnail_position_percentage = Settings.get("pas_gapi_gstreamer_thumbnail_position_percentage", 0)
 
         if (thumbnail_position_percentage > 0
             and thumbnail_position_percentage <= 100
@@ -132,6 +132,12 @@ Returns a thumbnail of the given mimetype.
 
             video_fakesink = Gst.ElementFactory.make("fakesink")
             self.pipeline.set_property("video-sink", video_fakesink)
+
+            audio_fakesink = Gst.ElementFactory.make("fakesink")
+            self.pipeline.set_property("audio-sink", audio_fakesink)
+
+            text_fakesink = Gst.ElementFactory.make("fakesink")
+            self.pipeline.set_property("text-sink", text_fakesink)
 
             caps = Gst.Caps.from_string(mimetype)
 
