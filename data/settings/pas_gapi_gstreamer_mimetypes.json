@@ -1,5 +1,5 @@
 {
- "pas_gst_mimetypes": {
+ "pas_gapi_gstreamer_mimetypes": {
   "application/x-3gp": {
    "_x_type": {
     "audio": "audio/3gpp",

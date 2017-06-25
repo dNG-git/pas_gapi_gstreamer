@@ -1,5 +1,5 @@
 {
- "pas_gst_caps": {
+ "pas_gapi_gstreamer_caps": {
   "container:video/mp2t": "video/mpegts, mpegversion=(int)2, systemstream=(boolean)true, packetsize=(int)188",
   "container:video/mp4": "video/quicktime, variant=(string)iso",
   "container:video/mpeg": "video/mpeg, mpegversion=(int)2, systemstream=(boolean)true",
