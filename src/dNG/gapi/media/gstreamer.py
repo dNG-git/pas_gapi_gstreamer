@@ -46,10 +46,10 @@ from dNG.data.media.gst_container_metadata import GstContainerMetadata
 from dNG.data.media.gst_image_metadata import GstImageMetadata
 from dNG.data.settings import Settings
 from dNG.gapi.callback_context_mixin import CallbackContextMixin
-from dNG.gapi.glib import Glib
-from dNG.gapi.mainloop.gobject import Gobject as GobjectMainloop
+from dNG.gapi.glib import Glib as GLib
 from dNG.module.named_loader import NamedLoader
 from dNG.runtime.exception_log_trap import ExceptionLogTrap
+from dNG.runtime.instance_lock import InstanceLock
 from dNG.runtime.io_exception import IOException
 from dNG.runtime.thread_lock import ThreadLock
 
@@ -91,15 +91,19 @@ Constructor __init__(Gstreamer)
         Abstract.__init__(self)
         CallbackContextMixin.__init__(self)
 
-        self.discovery_timeout = 5
+        self.discovery_timeout = 10
         """
 Processing may take some time. Wait for this amount of seconds.
+        """
+        self._instance_lock = InstanceLock()
+        """
+Thread safety lock
         """
         self.pipeline = None
         """
 GStreamer pipeline in use
         """
-        self._gobject_mainloop = GobjectMainloop.get_instance()
+        self._glib_mainloop = None
         """
 GObject mainloop
         """
@@ -121,23 +125,23 @@ Cached metadata instance
 GStreamer source URI
         """
 
-        Settings.read_file("{0}/settings/pas_gst.json".format(Settings.get("path_data")))
-        Settings.read_file("{0}/settings/pas_gst_caps.json".format(Settings.get("path_data")))
-        Settings.read_file("{0}/settings/pas_gst_mimetypes.json".format(Settings.get("path_data")))
+        Settings.read_file("{0}/settings/pas_gapi_gstreamer.json".format(Settings.get("path_data")))
+        Settings.read_file("{0}/settings/pas_gapi_gstreamer_caps.json".format(Settings.get("path_data")))
+        Settings.read_file("{0}/settings/pas_gapi_gstreamer_mimetypes.json".format(Settings.get("path_data")))
 
         with Gstreamer._lock:
-            gst_debug_enabled = Settings.get("pas_gst_debug_enabled", False)
+            gst_debug_enabled = Settings.get("pas_gapi_gstreamer_debug_enabled", False)
 
             if (Gstreamer.debug_mode != gst_debug_enabled):
                 Gst.debug_set_default_threshold(Gst.DebugLevel.DEBUG if (gst_debug_enabled) else Gst.DebugLevel.NONE)
                 Gstreamer.debug_mode = gst_debug_enabled
             #
-
-            self._init_gst()
         #
 
-        discovery_timeout = float(Settings.get("pas_gst_discovery_timeout", 0))
+        discovery_timeout = float(Settings.get("pas_gapi_gstreamer_discovery_timeout", 0))
         if (discovery_timeout > 0): self.discovery_timeout = discovery_timeout
+
+        self.start()
     #
 
     def __del__(self):
@@ -236,21 +240,6 @@ out.
         return self.metadata
     #
 
-    def _init_gst(self):
-        """
-Initializes the GStreamer framework in the GLib MainLoop thread.
-
-:since: v0.2.00
-        """
-
-        if (not Gst.is_initialized()):
-            if (not Gst.init_check(sys.argv)): raise IOException("GStreamer initialization failed")
-
-            gst_version = Gst.version_string()
-            if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.__init__()- reporting: {1} ready", self, gst_version, context = "pas_gapi_gstreamer")
-        #
-    #
-
     def _parse_gst_caps(self, caps):
         """
 Parses the GStreamer caps definition.
@@ -292,7 +281,7 @@ Parses the GStreamer caps codec for a matching mimetype identifier.
         _return = codec
 
         if (type(caps) is dict and type(codec) is str):
-            gst_mimetypes = Settings.get("pas_gst_mimetypes", { })
+            gst_mimetypes = Settings.get("pas_gapi_gstreamer_mimetypes", { })
 
             if (codec in gst_mimetypes):
                 if (type(gst_mimetypes[codec]) is str): _return = gst_mimetypes[codec]
@@ -398,7 +387,7 @@ Parses the GStreamer stream info.
 
             stream_type = "audio"
         elif (stream_info_type is GstPbutils.DiscovererContainerInfo):
-            for sub_stream_info in Glib.parse_glist(stream_info.get_streams()): self._parse_gst_stream_info(sub_stream_info)
+            for sub_stream_info in GLib.parse_glist(stream_info.get_streams()): self._parse_gst_stream_info(sub_stream_info)
             if (self.local.metadata['container'] is None): stream_type = "container"
         elif (stream_info_type is GstPbutils.DiscovererSubtitleInfo):
             stream_type = "text"
@@ -536,6 +525,33 @@ asynchronous state changes if timeout is given.
         return _return
     #
 
+    def start(self, params = None, last_return = None):
+        """
+Starts the GStreamer process und underlying library if applicable.
+
+:param params: Parameter specified
+:param last_return: The return value from the last hook called.
+
+:since: v0.2.00
+        """
+
+        with self._instance_lock:
+            if (self._glib_mainloop is None): self._glib_mainloop = GLib.get_mainloop_instance()
+        #
+
+        with Gstreamer._lock:
+            if (not Gst.is_initialized()):
+                Gst.segtrap_set_enabled(False)
+                Gst.Registry.fork_set_enabled(False)
+
+                if (not Gst.init_check(sys.argv)): raise IOException("GStreamer initialization failed")
+
+                gst_version = Gst.version_string()
+                if (self.log_handler is not None): self.log_handler.debug("#echo(__FILEPATH__)# -{0!r}.__init__()- reporting: {1} ready", self, gst_version, context = "pas_gapi_gstreamer")
+            #
+        #
+    #
+
     def stop(self, params = None, last_return = None):
         """
 Stop an active GStreamer process.
@@ -545,6 +561,10 @@ Stop an active GStreamer process.
 
 :since: v0.2.00
         """
+
+        with self._instance_lock:
+            if (self._glib_mainloop is not None): self._glib_mainloop = None
+        #
 
         return last_return
     #
